@@ -110,6 +110,12 @@ Set `VALID_SERVICES=your,product,tags,here` to declare what your reps sell. Thes
 
 ## Documentation
 
+**Using an AI assistant (Cursor, Claude Code, Copilot Chat)?** Start here:
+
+- **[`AGENTS.md`](AGENTS.md)** — Full step-by-step operating manual designed to be handed to an AI coding assistant. Covers setup, verification, customization, deployment, and troubleshooting in explicit "run this command / check this output" format.
+
+For humans reading prose:
+
 - [`docs/SETUP.md`](docs/SETUP.md) — Full local development setup
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — Deploy to Railway, Fly.io, or a VPS
 - [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) — Every environment variable explained
