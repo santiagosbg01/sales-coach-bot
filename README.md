@@ -159,6 +159,26 @@ Contributions welcome — bug fixes, integrations (WhatsApp, Slack), new questio
 
 MIT — see [`LICENSE`](LICENSE). Use it, fork it, sell your fork if you want. Attribution appreciated but not required.
 
+## Disclaimer
+
+**Este proyecto se entrega "tal cual" ("AS IS"), sin garantías de ningún tipo.**
+
+The author(s) and contributors of Sales Coach Bot are **not responsible** for:
+
+- Any damage, data loss, downtime, or business impact resulting from the use, misuse, or inability to use this software
+- Security vulnerabilities present in the code, its dependencies, third-party services (Telegram, OpenAI, Resend, Railway, etc.), or the infrastructure you deploy it on
+- Costs incurred from third-party APIs (OpenAI, Anthropic, Resend, hosting, etc.) — you are solely responsible for monitoring and controlling your own spend
+- Compliance with local regulations (data protection, labor laws, employee monitoring, GDPR, CCPA, HIPAA, etc.) — you are solely responsible for legal review before deploying in your organization
+- Accuracy, appropriateness, or bias of LLM-generated grading and feedback
+- Storage, transmission, or exposure of personally identifiable information (PII) of your employees, customers, or third parties
+- Any employment or HR consequences derived from performance data collected by this system
+
+**By using, forking, or deploying this software, you accept full responsibility for your instance and any consequences arising from it.**
+
+Do your own security review, threat modeling, dependency audit, and legal review before running in production. Rotate API keys regularly. Review LLM outputs for bias. Get explicit consent from employees before enrolling them in any monitoring or scoring system.
+
+See [`LICENSE`](LICENSE) for the full MIT warranty disclaimer.
+
 ## Credits
 
 Originally built as an internal sales training program, then packaged as a reusable open shell. If you use it, we'd love to hear how (open an issue or discussion).

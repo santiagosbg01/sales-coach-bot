@@ -4,6 +4,8 @@
 >
 > **For humans:** you can absolutely read this too — it's just written in "checklist + exact command" style rather than prose.
 
+> **⚠️ Before you start:** read [`DISCLAIMER.md`](DISCLAIMER.md). This software is provided "AS IS" with **no warranty and no liability** for security issues, data loss, third-party costs, LLM output accuracy, legal compliance, or HR consequences. You are solely responsible for your deployment, your data, your employees' consent, and your legal review.
+
 ---
 
 ## How this system works (one-page mental model)
