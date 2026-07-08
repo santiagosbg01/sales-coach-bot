@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Canjear puntos — {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h2 class="text-2xl font-bold text-white">Canjear puntos</h2>
+  {% if reps %}
+  <p class="text-gray-400 text-sm mt-0.5">Canjea puntos por premios en nombre de un rep.</p>
+  {% else %}
+  <p class="text-gray-400 text-sm mt-0.5">Cambia tus puntos por premios. Tienes <span class="text-indigo-400 font-bold">{{ user_points }}</span> puntos.</p>
+  {% endif %}
+</div>
+
+{% if not prizes %}
+<div class="bg-gray-900 border border-gray-800 rounded-2xl p-12 text-center">
+  <p class="text-gray-500">No hay premios disponibles. Contacta a tu admin.</p>
+</div>
+{% else %}
+<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
+  {% for p in prizes %}
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5 {{ 'opacity-60' if not p.available else '' }}">
+    <h3 class="font-semibold text-white">{{ p.name }}</h3>
+    <p class="text-gray-500 text-sm mt-0.5">{{ p.description or '—' }}</p>
+    <p class="text-indigo-400 text-sm mt-2">⭐ {{ p.points_cost }} pts</p>
+    {% if p.quantity_available is not none %}
+    <p class="text-gray-600 text-xs">{{ p.quantity_available }} disponibles</p>
+    {% endif %}
+    {% if p.available and user_points >= p.points_cost %}
+    <form method="post" action="/redeem{{ '?token=' ~ request.args.get('token','') if request.args.get('token') else '' }}" class="mt-4">
+      <input type="hidden" name="prize_id" value="{{ p.id }}"/>
+      {% if user_id %}<input type="hidden" name="user_id" value="{{ user_id }}"/>{% endif %}
+      <button type="submit" onclick="return confirm('¿Canjear {{ p.name }} por {{ p.points_cost }} pts?')"
+        class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium py-2 rounded-lg transition-colors">
+        Canjear
+      </button>
+    </form>
+    {% elif p.available and user_points < p.points_cost %}
+    <p class="text-amber-400 text-xs mt-4">Necesitas {{ p.points_cost - user_points }} pts más</p>
+    {% elif not p.available %}
+    <p class="text-gray-500 text-xs mt-4">No disponible</p>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Admin: redeem for another rep -->
+{% if reps %}
+<div class="border-t border-gray-800 pt-8 mt-8">
+  <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Canjear por un rep (admin)</h3>
+  <form method="post" action="/redeem" class="flex flex-wrap items-end gap-4">
+    <div>
+      <label class="block text-xs text-gray-500 mb-1">Rep</label>
+      <select name="user_id" required
+        class="bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <option value="">Seleccionar...</option>
+        {% for r in reps %}
+        <option value="{{ r.id }}">{{ r.name }} ({{ r.points }} pts)</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="block text-xs text-gray-500 mb-1">Premio</label>
+      <select name="prize_id" required
+        class="bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <option value="">Seleccionar...</option>
+        {% for p in prizes %}
+        {% if p.available %}
+        <option value="{{ p.id }}">{{ p.name }} ({{ p.points_cost }} pts)</option>
+        {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium px-4 py-2 rounded-lg">
+      Canjear por rep
+    </button>
+  </form>
+</div>
+{% endif %}
+
+<!-- Redemption history -->
+{% if redemptions %}
+<div class="mt-8">
+  <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Historial de canjes</h3>
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-gray-800 text-gray-500 text-xs uppercase">
+          <th class="px-6 py-3 text-left">Rep</th>
+          <th class="px-6 py-3 text-left">Premio</th>
+          <th class="px-6 py-3 text-left">Puntos</th>
+          <th class="px-6 py-3 text-left">Fecha</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-800">
+        {% for r in redemptions %}
+        <tr>
+          <td class="px-6 py-3 text-gray-300">{{ r.user_name }}</td>
+          <td class="px-6 py-3 text-gray-300">{{ r.prize_name }}</td>
+          <td class="px-6 py-3 text-indigo-400">{{ r.points_spent }}</td>
+          <td class="px-6 py-3 text-gray-500">{{ r.redeemed_at }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inscribirse — {{ APP_NAME }}</title>
+  <meta name="robots" content="noindex"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-950 text-gray-100 flex items-center justify-center p-4">
+  <div class="max-w-md w-full">
+
+    {% if success %}
+    <div class="text-center mb-6">
+      <div class="w-14 h-14 bg-emerald-600 rounded-2xl flex items-center justify-center text-white text-2xl mx-auto">✓</div>
+      <h1 class="text-xl font-semibold text-white mt-4">Inscripción enviada</h1>
+      <p class="text-gray-400 text-sm mt-2">Hola, {{ enroll_name }}. Tu solicitud está registrada.</p>
+    </div>
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
+      <p class="text-gray-300 text-sm">
+        Un administrador debe aprobarte. Cuando lo haga, podrás empezar a entrenar.
+      </p>
+      <p class="text-gray-400 text-sm">
+        <strong>Siguiente paso:</strong> abre el bot en Telegram y escribe <code class="bg-gray-800 px-1.5 py-0.5 rounded">/start</code> o <code class="bg-gray-800 px-1.5 py-0.5 rounded">/empezar</code>. Así vinculamos tu chat y te avisamos cuando estés aprobado.
+      </p>
+      <a href="{{ link }}"
+         class="inline-flex items-center justify-center gap-2 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 px-4 rounded-xl transition-colors">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+        </svg>
+        Abrir bot en Telegram
+      </a>
+    </div>
+    {% else %}
+
+    <div class="mb-6">
+      <div class="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl mx-auto">C</div>
+      <h1 class="text-xl font-semibold text-white mt-4 text-center">{{ APP_NAME }} Sales Training</h1>
+      <p class="text-gray-400 text-sm mt-1 text-center">Completa tu inscripción aquí. Luego abre el bot y escribe /start.</p>
+    </div>
+
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+      <div class="bg-indigo-950/50 border border-indigo-800/50 rounded-lg p-4 mb-4">
+        <p class="text-indigo-200 text-sm font-medium mb-2">📱 Obtén tu ID de Telegram primero</p>
+        <p class="text-gray-400 text-xs mb-2">
+          1) Abre <a href="https://t.me/Getmyid_bot" target="_blank" rel="noopener" class="text-indigo-400 hover:text-indigo-300 underline">@Getmyid_bot</a> en Telegram.<br/>
+          2) Escribe <strong>/start</strong> y el bot te mostrará tu ID numérico.<br/>
+          3) Vuelve aquí e ingresa ese ID junto con tus datos.
+        </p>
+        <a href="https://t.me/Getmyid_bot" target="_blank" rel="noopener"
+           class="inline-flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300 font-medium">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+          </svg>
+          Abrir Get My ID en Telegram
+        </a>
+      </div>
+      <p class="text-gray-400 text-xs mb-4">
+        Usa un correo <strong>@yourcompany.com</strong>. Luego abre el bot de {{ APP_NAME }} y escribe /start para vincular tu chat.
+      </p>
+
+      {% if errors %}
+      <ul class="mb-4 text-amber-400 text-sm list-disc list-inside">
+        {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+
+      <form method="post" action="/enroll" class="space-y-4">
+        <div>
+          <label for="name" class="block text-gray-400 text-sm mb-1">Nombre completo *</label>
+          <input type="text" id="name" name="name" required
+                 value="{{ form.name if form else '' }}"
+                 class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"/>
+        </div>
+        <div>
+          <label for="email" class="block text-gray-400 text-sm mb-1">Correo *</label>
+          <input type="email" id="email" name="email" required placeholder="tu.nombre@yourcompany.com"
+                 value="{{ form.email if form else '' }}"
+                 class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"/>
+          <p class="text-gray-500 text-xs mt-1">Solo se aceptan correos @yourcompany.com.</p>
+        </div>
+        <div>
+          <label for="telegram_id" class="block text-gray-400 text-sm mb-1">ID de Telegram *</label>
+          <input type="text" id="telegram_id" name="telegram_id" required placeholder="Ej: 123456789"
+                 value="{{ form.telegram_id if form else '' }}"
+                 class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"/>
+          <p class="text-gray-500 text-xs mt-1">Pega aquí el ID que te mostró <a href="https://t.me/Getmyid_bot" target="_blank" rel="noopener" class="text-indigo-400 hover:text-indigo-300">@Getmyid_bot</a> al escribir /start.</p>
+        </div>
+        <div>
+          <label for="group_id" class="block text-gray-400 text-sm mb-1">Equipo</label>
+          <select id="group_id" name="group_id"
+                  class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+            <option value="">— Sin equipo —</option>
+            {% for g in groups %}
+            <option value="{{ g.id }}" {{ 'selected' if form and form.group_id == g.id|string else '' }}>{{ '— ' if g.parent_group_id else '' }}{{ g.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="role" class="block text-gray-400 text-sm mb-1">Rol de ventas</label>
+          <select id="role" name="role"
+                  class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+            <option value="farmer" {{ 'selected' if not form or form.role == 'farmer' else '' }}>Farmer</option>
+            <option value="hunter" {{ 'selected' if form and form.role == 'hunter' else '' }}>Hunter</option>
+            <option value="manager" {{ 'selected' if form and form.role == 'manager' else '' }}>Manager</option>
+          </select>
+        </div>
+        <button type="submit"
+                class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 px-4 rounded-xl transition-colors">
+          Enviar inscripción
+        </button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</body>
+</html>

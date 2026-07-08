@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+{% block title %}{{ rep.name }} — {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+{% macro delta_badge(delta, suffix='') -%}
+  {%- set d_abs, d_pct = delta -%}
+  {%- if d_abs is not none and (d_abs != 0 or d_pct is not none) -%}
+    {%- set positive = d_abs > 0 -%}
+    {%- set neutral = d_abs == 0 -%}
+    <span class="inline-flex items-center gap-0.5 text-xs font-medium
+      {% if neutral %}text-gray-500{% elif positive %}text-emerald-400{% else %}text-red-400{% endif %}">
+      {% if not neutral %}{{ '▲' if positive else '▼' }}{% endif %}
+      {% if d_pct is not none %}{{ d_pct|abs }}%{% else %}{{ d_abs|abs }}{{ suffix }}{% endif %}
+    </span>
+  {%- else -%}
+    <span class="text-gray-600 text-xs">—</span>
+  {%- endif -%}
+{%- endmacro %}
+
+<!-- Back -->
+<a href="/?start={{ date_start }}&end={{ date_end }}&preset={{ date_preset }}" class="inline-flex items-center gap-1.5 text-gray-400 hover:text-white text-sm mb-6">
+  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+  Volver al resumen
+</a>
+
+<!-- Rep header -->
+<div class="flex items-center gap-5 mb-6">
+  <div class="w-16 h-16 rounded-2xl bg-indigo-700 flex items-center justify-center text-white text-2xl font-bold">
+    {{ rep.name[0].upper() }}
+  </div>
+  <div>
+    <h2 class="text-2xl font-bold text-white">{{ rep.name }}</h2>
+    <p class="text-gray-400 text-sm mt-0.5">
+      {{ flag }} {{ (rep.base_country or '').capitalize() }}
+      {% if role %} · {{ role }}{% endif %}
+      {% if rep.specializations %}
+        · {{ rep.specializations | join(', ') | capitalize }}
+      {% endif %}
+    </p>
+    <p class="text-gray-500 text-xs mt-1">
+      Periodo: {{ date_start }} → {{ date_end }} · {{ range_days }} {{ 'día' if range_days == 1 else 'días' }}
+      <span class="text-gray-600">·</span>
+      vs {{ prev_start_label }}–{{ prev_end_label }}
+    </p>
+  </div>
+</div>
+
+<!-- Date range picker -->
+<div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 mb-6">
+  <form method="get" action="/rep/{{ rep.id }}" id="date-range-form" class="flex flex-wrap items-center gap-2">
+    <input type="hidden" name="preset" id="preset-field" value="{{ date_preset }}"/>
+
+    <div class="flex items-center gap-1 mr-2 flex-wrap">
+      {% set presets = [('7d','Últimos 7 días'),('14d','Últimos 14 días'),('30d','Últimos 30 días'),('this_week','Esta semana'),('last_week','Semana pasada'),('this_month','Este mes')] %}
+      {% for val, lbl in presets %}
+      <button type="button" data-preset="{{ val }}"
+        class="preset-btn px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors
+          {% if date_preset == val %}bg-indigo-600 border-indigo-500 text-white{% else %}bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700{% endif %}">
+        {{ lbl }}
+      </button>
+      {% endfor %}
+    </div>
+
+    <div class="flex items-center gap-2 ml-auto flex-wrap">
+      <label class="text-gray-400 text-xs">Desde</label>
+      <input type="date" name="start" value="{{ date_start }}" max="{{ date_end }}"
+        class="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"/>
+      <label class="text-gray-400 text-xs">Hasta</label>
+      <input type="date" name="end" value="{{ date_end }}" min="{{ date_start }}"
+        class="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"/>
+      <button type="submit" id="apply-btn"
+        class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-1.5 rounded-lg">
+        Aplicar
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Window KPIs (selected period) -->
+<h3 class="text-gray-300 text-sm font-semibold mb-3">Desempeño en el periodo</h3>
+<div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+  <div class="stat-card">
+    <p class="text-gray-400 text-xs font-medium uppercase tracking-wider">Enviadas</p>
+    <p class="text-3xl font-bold text-white mt-2">{{ win.sent }}</p>
+    <p class="text-gray-500 text-xs mt-1">prev: {{ prev.sent }}</p>
+    <div class="mt-1">{{ delta_badge(deltas.sent) }}</div>
+  </div>
+  <div class="stat-card">
+    <p class="text-gray-400 text-xs font-medium uppercase tracking-wider">Respondidas</p>
+    <p class="text-3xl font-bold text-white mt-2">{{ win.answered }}</p>
+    <p class="text-indigo-400 text-xs mt-1">{{ win_ans_pct }}% tasa · prev {{ prev_ans_pct }}%</p>
+    <div class="mt-1">{{ delta_badge(deltas.ans_pct, 'pp') }}</div>
+  </div>
+  <div class="stat-card">
+    <p class="text-gray-400 text-xs font-medium uppercase tracking-wider">Correctas</p>
+    <p class="text-3xl font-bold text-emerald-400 mt-2">{{ win.correct }}</p>
+    <p class="text-emerald-500 text-xs mt-1">{{ win_cor_pct }}% · prev {{ prev_cor_pct }}%</p>
+    <div class="mt-1">{{ delta_badge(deltas.cor_pct, 'pp') }}</div>
+  </div>
+  <div class="stat-card">
+    <p class="text-gray-400 text-xs font-medium uppercase tracking-wider">Score prom.</p>
+    <p class="text-3xl font-bold text-amber-400 mt-2">
+      {{ "%.2f"|format(win_avg) if win_avg is not none else "—" }}
+    </p>
+    <p class="text-gray-500 text-xs mt-1">prev: {{ "%.2f"|format(prev_avg) if prev_avg is not none else "—" }}</p>
+    <div class="mt-1">{{ delta_badge(deltas.avg) }}</div>
+  </div>
+  <div class="stat-card">
+    <p class="text-gray-400 text-xs font-medium uppercase tracking-wider">Expiradas</p>
+    <p class="text-3xl font-bold text-amber-400 mt-2">{{ win.expired }}</p>
+    <p class="text-gray-500 text-xs mt-1">prev: {{ prev.expired }}</p>
+    <div class="mt-1">{{ delta_badge(deltas.expired) }}</div>
+  </div>
+</div>
+
+<!-- Timeseries chart -->
+<div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-8">
+  <div class="flex items-center justify-between mb-5">
+    <h3 class="text-sm font-semibold text-gray-300">Evolución en el periodo</h3>
+    <span class="text-xs text-gray-500">{{ range_days }} {{ 'día' if range_days == 1 else 'días' }}</span>
+  </div>
+  {% if ts_labels %}
+  <div style="position:relative;height:260px;">
+    <canvas id="tsChart"></canvas>
+  </div>
+  {% else %}
+  <p class="text-gray-600 text-sm">Sin datos en el rango seleccionado.</p>
+  {% endif %}
+</div>
+
+<!-- All-time totals -->
+<h3 class="text-gray-300 text-sm font-semibold mb-3">Totales históricos</h3>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+  {% set ans_pct = (stats.answered / stats.sent * 100) | round | int if stats.sent else 0 %}
+  {% set cor_pct = (stats.correct / stats.answered * 100) | round | int if stats.answered else 0 %}
+  <div class="stat-card">
+    <p class="text-gray-400 text-xs font-medium uppercase tracking-wider">Total enviadas</p>
+    <p class="text-4xl font-bold text-white mt-2">{{ stats.sent }}</p>
+  </div>
+  <div class="stat-card">
+    <p class="text-gray-400 text-xs font-medium uppercase tracking-wider">Respondidas</p>
+    <p class="text-4xl font-bold text-white mt-2">{{ stats.answered }}</p>
+    <p class="text-indigo-400 text-sm mt-1">{{ ans_pct }}% tasa</p>
+  </div>
+  <div class="stat-card">
+    <p class="text-gray-400 text-xs font-medium uppercase tracking-wider">Correctas</p>
+    <p class="text-4xl font-bold text-emerald-400 mt-2">{{ stats.correct }}</p>
+    <p class="text-emerald-500 text-sm mt-1">{{ cor_pct }}% acierto</p>
+  </div>
+  <div class="stat-card">
+    <p class="text-gray-400 text-xs font-medium uppercase tracking-wider">Score promedio</p>
+    <p class="text-4xl font-bold text-amber-400 mt-2">
+      {{ "%.2f"|format(stats.avg_score) if stats.avg_score else "—" }}
+    </p>
+    <p class="text-gray-500 text-sm mt-1">de 5.0</p>
+  </div>
+</div>
+
+<!-- Product chart + Topic breakdown -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+  <!-- Doughnut chart by product -->
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+    <h3 class="text-sm font-semibold text-gray-300 mb-5">Rendimiento por producto (histórico)</h3>
+    {% if prod_labels %}
+    <div style="position:relative;height:220px;">
+      <canvas id="prodChart"></canvas>
+    </div>
+    {% else %}
+    <p class="text-gray-600 text-sm">Sin datos de producto aún.</p>
+    {% endif %}
+  </div>
+
+  <!-- Tag breakdown -->
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+    <h3 class="text-sm font-semibold text-gray-300 mb-5">Temas por rendimiento (histórico)</h3>
+
+    {% if bd.best %}
+    <p class="text-emerald-400 text-xs font-medium uppercase tracking-wider mb-2">Mejores</p>
+    <div class="space-y-2 mb-5">
+      {% for tag, pct, n in bd.best[:5] %}
+      <div class="flex items-center gap-3">
+        <span class="text-gray-300 text-xs w-32 truncate">{{ tag }}</span>
+        <div class="flex-1 bg-gray-800 rounded-full h-2">
+          <div class="bg-emerald-500 h-2 rounded-full" style="width:{{ pct }}%"></div>
+        </div>
+        <span class="text-gray-500 text-xs w-8 text-right">{{ pct }}%</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if bd.worst %}
+    <p class="text-red-400 text-xs font-medium uppercase tracking-wider mb-2">Necesitan trabajo</p>
+    <div class="space-y-2">
+      {% for tag, pct, n in bd.worst[:5] %}
+      <div class="flex items-center gap-3">
+        <span class="text-gray-300 text-xs w-32 truncate">{{ tag }}</span>
+        <div class="flex-1 bg-gray-800 rounded-full h-2">
+          <div class="bg-red-500 h-2 rounded-full" style="width:{{ pct }}%"></div>
+        </div>
+        <span class="text-gray-500 text-xs w-8 text-right">{{ pct }}%</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not bd.best and not bd.worst %}
+    <p class="text-gray-600 text-sm">Sin datos de etiquetas aún.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Attempts table (within period) -->
+<div class="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+  <div class="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
+    <h3 class="text-sm font-semibold text-gray-300">Respuestas en el periodo</h3>
+    <span class="text-xs text-gray-500">{{ attempts|length }} mostradas</span>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-gray-800 text-gray-500 text-xs uppercase tracking-wider">
+          <th class="px-6 py-3 text-left">Pregunta</th>
+          <th class="px-6 py-3 text-left">Producto</th>
+          <th class="px-6 py-3 text-left">Tipo</th>
+          <th class="px-6 py-3 text-left">Respuesta</th>
+          <th class="px-6 py-3 text-center">Score</th>
+          <th class="px-6 py-3 text-right">Fecha</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-800">
+        {% for a in attempts %}
+        <tr class="hover:bg-gray-800/40 transition-colors">
+          <td class="px-6 py-3 text-gray-300 max-w-xs truncate">{{ a.prompt }}</td>
+          <td class="px-6 py-3 text-gray-400 text-xs">{{ a.product }}</td>
+          <td class="px-6 py-3">
+            {% if a.qtype == 'multiple_choice' %}
+              <span class="badge-mc">OM</span>
+            {% elif a.qtype == 'yes_no' %}
+              <span class="badge-yn">S/N</span>
+            {% else %}
+              <span class="badge-oe">Abierta</span>
+            {% endif %}
+          </td>
+          <td class="px-6 py-3 text-gray-400 text-xs max-w-xs truncate">{{ a.answer or '—' }}</td>
+          <td class="px-6 py-3 text-center">
+            {% if a.score is not none %}
+            <span class="font-bold {{ 'text-emerald-400' if a.correct else 'text-red-400' }}">{{ a.score }}/5</span>
+            {% else %}<span class="text-gray-600">—</span>{% endif %}
+          </td>
+          <td class="px-6 py-3 text-right text-gray-500 text-xs">{{ a.time }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="px-6 py-8 text-center text-gray-600">Sin respuestas en el rango seleccionado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if ts_labels %}
+<script>
+const tsCtx = document.getElementById('tsChart').getContext('2d');
+new Chart(tsCtx, {
+  type: 'bar',
+  data: {
+    labels: {{ ts_labels | tojson }},
+    datasets: [
+      {
+        type: 'bar',
+        label: 'Respondidas',
+        data: {{ ts_answered | tojson }},
+        backgroundColor: 'rgba(99,102,241,0.45)',
+        borderColor: 'rgba(99,102,241,1)',
+        borderWidth: 1,
+        borderRadius: 4,
+        yAxisID: 'y',
+        order: 2,
+      },
+      {
+        type: 'bar',
+        label: 'Correctas',
+        data: {{ ts_correct | tojson }},
+        backgroundColor: 'rgba(52,211,153,0.55)',
+        borderColor: 'rgba(52,211,153,1)',
+        borderWidth: 1,
+        borderRadius: 4,
+        yAxisID: 'y',
+        order: 2,
+      },
+      {
+        type: 'line',
+        label: 'Score prom.',
+        data: {{ ts_avg | tojson }},
+        borderColor: 'rgba(251,191,36,1)',
+        backgroundColor: 'rgba(251,191,36,0.15)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: 'rgba(251,191,36,1)',
+        yAxisID: 'y2',
+        tension: 0.3,
+        spanGaps: true,
+        order: 1,
+      },
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#9ca3af', font: { size: 11 } } } },
+    scales: {
+      x: { ticks: { color: '#6b7280', maxRotation: 0, autoSkip: true, font: { size: 10 } }, grid: { color: '#1f2937' } },
+      y: {
+        ticks: { color: '#6b7280', precision: 0, font: { size: 10 } },
+        grid: { color: '#1f2937' }, beginAtZero: true,
+        title: { display: true, text: 'Respondidas / Correctas', color: '#6b7280', font: { size: 10 } },
+      },
+      y2: {
+        position: 'right',
+        min: 0, max: 5,
+        ticks: { color: '#fbbf24', font: { size: 10 } },
+        grid: { drawOnChartArea: false },
+        title: { display: true, text: 'Score (0–5)', color: '#fbbf24', font: { size: 10 } },
+      }
+    }
+  }
+});
+</script>
+{% endif %}
+
+{% if prod_labels %}
+<script>
+const prodCtx = document.getElementById('prodChart').getContext('2d');
+new Chart(prodCtx, {
+  type: 'bar',
+  data: {
+    labels: {{ prod_labels | tojson }},
+    datasets: [
+      {
+        label: 'Correctas',
+        data: {{ prod_correct | tojson }},
+        backgroundColor: 'rgba(52,211,153,0.7)',
+        borderRadius: 4,
+        stack: 's',
+      },
+      {
+        label: 'Incorrectas',
+        data: {{ prod_wrong | tojson }},
+        backgroundColor: 'rgba(239,68,68,0.5)',
+        borderRadius: 4,
+        stack: 's',
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#9ca3af', font: { size: 11 } } } },
+    scales: {
+      x: { ticks: { color: '#6b7280' }, grid: { color: '#1f2937' }, stacked: true },
+      y: { ticks: { color: '#6b7280', precision: 0 }, grid: { color: '#1f2937' }, beginAtZero: true, stacked: true }
+    }
+  }
+});
+</script>
+{% endif %}
+
+<script>
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('preset-field').value = btn.dataset.preset;
+    document.getElementById('date-range-form').submit();
+  });
+});
+document.getElementById('apply-btn').addEventListener('click', () => {
+  document.getElementById('preset-field').value = 'custom';
+});
+</script>
+{% endblock %}

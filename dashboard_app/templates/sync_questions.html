@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Sincronizar preguntas — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto mt-12">
+  <h2 class="text-xl font-bold text-white mb-2">Sincronizar banco de preguntas</h2>
+  <p class="text-gray-400 text-sm mb-6">Carga o actualiza todas las preguntas desde los archivos <code class="text-gray-500">data/*.json</code> en la base de datos actual.</p>
+  <form action="/admin/sync-questions" method="post">
+    <button type="submit"
+       class="w-full inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-3 rounded-lg transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+      </svg>
+      Sincronizar ahora
+    </button>
+  </form>
+  <p class="text-gray-500 text-xs mt-4"><a href="/questions" class="text-indigo-400 hover:underline">← Volver al banco de preguntas</a></p>
+</div>
+{% endblock %}

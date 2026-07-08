@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<!-- Back -->
+<a href="/questions" class="inline-flex items-center gap-1.5 text-gray-400 hover:text-white text-sm mb-6">
+  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+  </svg>
+  Volver al banco de preguntas
+</a>
+
+<div class="flex items-center justify-between mb-6">
+  <h2 class="text-2xl font-bold text-white">{{ title }}</h2>
+  {% if q %}
+  <div class="flex gap-2">
+    <form method="post" action="/questions/{{ q.id }}/toggle">
+      <button type="submit"
+        class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors
+          {{ 'border-amber-700 text-amber-400 hover:bg-amber-900/30' if q.active else 'border-emerald-700 text-emerald-400 hover:bg-emerald-900/30' }}">
+        {{ '⏸ Desactivar' if q.active else '▶ Activar' }}
+      </button>
+    </form>
+    <form method="post" action="/questions/{{ q.id }}/delete"
+          onsubmit="return confirm('¿Eliminar esta pregunta permanentemente?')">
+      <button type="submit"
+        class="px-4 py-2 rounded-lg border border-red-800 text-red-400 hover:bg-red-900/30 text-sm font-medium transition-colors">
+        🗑 Eliminar
+      </button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+
+<form method="post" class="space-y-6">
+
+  <!-- ── Main fields ── -->
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-5">
+    <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Pregunta</h3>
+
+    <!-- Prompt -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1.5">
+        Texto de la pregunta <span class="text-red-400">*</span>
+      </label>
+      <textarea name="prompt" rows="3" required
+        class="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
+        placeholder="¿Cuál es el proceso de cotización para envíos internacionales?">{{ form.get('prompt', '') }}</textarea>
+    </div>
+
+    <!-- Row: type + product + country -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Tipo</label>
+        <select name="question_type" id="qtype"
+          class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          {% for qt in qtypes %}
+          <option value="{{ qt.value }}"
+            {{ 'selected' if form.get('question_type', 'open_ended') == qt.value else '' }}>
+            {% if qt.value == 'open_ended' %}Abierta
+            {% elif qt.value == 'multiple_choice' %}Opción múltiple
+            {% else %}Sí / No{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Producto</label>
+        <select name="product"
+          class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          {% for p in products %}
+          <option value="{{ p }}" {{ 'selected' if form.get('product', 'general') == p else '' }}>
+            {{ p.capitalize() }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">País</label>
+        <select name="country"
+          class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          {% for c in countries %}
+          <option value="{{ c }}" {{ 'selected' if form.get('country', 'all') == c else '' }}>
+            {% if c == 'all' %}Todos{% else %}{{ c.capitalize() }}{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- Row: difficulty + category + active -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Dificultad</label>
+        <select name="difficulty"
+          class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          {% for d in diffs %}
+          <option value="{{ d.value }}" {{ 'selected' if form.get('difficulty', 'medium') == d.value else '' }}>
+            {% if d.value == 'easy' %}Fácil{% elif d.value == 'hard' %}Difícil{% else %}Media{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Categoría</label>
+        <select name="category"
+          class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          {% for cat in cats %}
+          <option value="{{ cat.value }}" {{ 'selected' if form.get('category', 'general') == cat.value else '' }}>
+            {{ cat.value.replace('_', ' ').capitalize() }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Estado</label>
+        <select name="active"
+          class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="1" {{ 'selected' if form.get('active', '1') == '1' else '' }}>✅ Activa</option>
+          <option value="0" {{ 'selected' if form.get('active', '1') == '0' else '' }}>⏸ Inactiva</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Tags -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1.5">Etiquetas
+        <span class="text-gray-500 font-normal">(separadas por coma)</span>
+      </label>
+      <input type="text" name="tags" value="{{ form.get('tags', '') }}"
+        placeholder="cotizacion, cliente nuevo, objeccion"
+        class="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"/>
+    </div>
+  </div>
+
+  <!-- ── Multiple choice options (shown/hidden by JS) ── -->
+  <div id="mc-section"
+    class="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4
+           {{ '' if form.get('question_type') == 'multiple_choice' else 'hidden' }}">
+    <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Opciones de respuesta</h3>
+    {% for letter, label in [('a','A'), ('b','B'), ('c','C'), ('d','D')] %}
+    <div class="flex items-center gap-3">
+      <span class="w-7 h-7 rounded-full bg-indigo-700 text-white text-xs font-bold flex items-center justify-center shrink-0">{{ label }}</span>
+      <input type="text" name="choice_{{ letter }}" value="{{ form.get('choice_' + letter, '') }}"
+        placeholder="Opción {{ label }}..."
+        class="flex-1 bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"/>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ── Correct answer (MC + Yes/No) ── -->
+  <div id="answer-section"
+    class="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4
+           {{ '' if form.get('question_type') in ('multiple_choice', 'yes_no') else 'hidden' }}">
+    <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Respuesta correcta</h3>
+
+    <div id="mc-answer" class="{{ '' if form.get('question_type') == 'multiple_choice' else 'hidden' }}">
+      <label class="block text-sm font-medium text-gray-300 mb-1.5">Letra correcta (A, B, C o D)</label>
+      <input type="text" name="correct_answer" id="mc-answer-input"
+        value="{{ form.get('correct_answer', '') }}"
+        placeholder="Ej: b"
+        maxlength="1"
+        class="w-24 bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase"/>
+    </div>
+
+    <div id="yn-answer" class="{{ '' if form.get('question_type') == 'yes_no' else 'hidden' }}">
+      <label class="block text-sm font-medium text-gray-300 mb-1.5">Respuesta correcta</label>
+      <select name="correct_answer" id="yn-answer-select"
+        class="w-40 bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <option value="si"  {{ 'selected' if form.get('correct_answer', '') == 'si'  else '' }}>Sí</option>
+        <option value="no"  {{ 'selected' if form.get('correct_answer', '') == 'no'  else '' }}>No</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ── Rubric (open-ended grading criteria) ── -->
+  <div id="rubric-section" class="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-5">
+    <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Criterios de calificación</h3>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1.5">Respuesta ideal / sugerida</label>
+      <textarea name="ideal_answer" rows="3"
+        class="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
+        placeholder="Describe la respuesta ideal que el rep debería dar…">{{ form.get('ideal_answer', '') }}</textarea>
+    </div>
+
+    <div id="must-have-section">
+      <label class="block text-sm font-medium text-gray-300 mb-1.5">
+        Conceptos obligatorios
+        <span class="text-gray-500 font-normal">(uno por línea — el LLM los usa para calificar)</span>
+      </label>
+      <textarea name="must_have_concepts" rows="5"
+        class="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y font-mono"
+        placeholder="tiempo de tránsito&#10;cobertura de seguro&#10;requisitos de documentación">{{ form.get('must_have_concepts', '') }}</textarea>
+    </div>
+  </div>
+
+  <!-- ── Submit ── -->
+  <div class="flex items-center gap-4 pt-2 pb-8">
+    <button type="submit"
+      class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-8 py-2.5 rounded-lg text-sm transition-colors">
+      {{ 'Guardar cambios' if q else 'Crear pregunta' }}
+    </button>
+    <a href="/questions" class="text-gray-400 hover:text-white text-sm">Cancelar</a>
+  </div>
+
+</form>
+
+<script>
+const qtypeSelect = document.getElementById('qtype');
+const mcSection   = document.getElementById('mc-section');
+const ansSection  = document.getElementById('answer-section');
+const mcAnswer    = document.getElementById('mc-answer');
+const ynAnswer    = document.getElementById('yn-answer');
+
+function updateVisibility() {
+  const v = qtypeSelect.value;
+
+  mcSection.classList.toggle('hidden', v !== 'multiple_choice');
+  ansSection.classList.toggle('hidden', v === 'open_ended');
+  mcAnswer.classList.toggle('hidden', v !== 'multiple_choice');
+  ynAnswer.classList.toggle('hidden', v !== 'yes_no');
+
+  // Disable the hidden inputs so they don't override each other
+  document.getElementById('mc-answer-input').disabled  = (v !== 'multiple_choice');
+  document.getElementById('yn-answer-select').disabled = (v !== 'yes_no');
+}
+
+qtypeSelect.addEventListener('change', updateVisibility);
+updateVisibility();
+</script>
+{% endblock %}

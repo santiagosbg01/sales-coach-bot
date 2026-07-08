@@ -1,0 +1,297 @@
+{% set m   = payload.get('meta', {}) %}
+{% set tw  = payload.get('team', {}).get('wow', {}) %}
+{% set tm  = payload.get('team', {}).get('metrics', {}) %}
+{% set co  = payload.get('callouts', {}) %}
+{% set kv  = payload.get('knowledge_vertical', {}) %}
+{% set rk  = payload.get('ranking', {}).get('rows', []) %}
+{% set fb  = payload.get('feedback', {}) %}
+{% set top = co.get('top_performers', []) %}
+{% set by_cat = kv.get('by_category', []) %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ APP_NAME }} — Semana {{ m.get('period_label_es', '') }}</title>
+</head>
+<body style="margin:0;padding:0;background:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;color:#1e293b;">
+
+{# ── helpers ── #}
+{% macro arrow(delta, positive_good=true) %}
+  {% if delta is none or delta == 0 %}
+    <span style="color:#94a3b8;">→</span>
+  {% elif (delta > 0 and positive_good) or (delta < 0 and not positive_good) %}
+    <span style="color:#10b981;font-weight:700;">↑</span>
+  {% else %}
+    <span style="color:#ef4444;font-weight:700;">↓</span>
+  {% endif %}
+{% endmacro %}
+
+{% macro delta_badge(delta, suffix='', positive_good=true) %}
+  {% if delta is none %}—
+  {% elif delta == 0 %}<span style="color:#94a3b8;">sin cambio</span>
+  {% elif (delta > 0 and positive_good) or (delta < 0 and not positive_good) %}
+    <span style="color:#10b981;font-weight:600;">+{{ delta }}{{ suffix }}</span>
+  {% else %}
+    <span style="color:#ef4444;font-weight:600;">{{ delta }}{{ suffix }}</span>
+  {% endif %}
+{% endmacro %}
+
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#0f172a;">
+<tr><td align="center" style="padding:24px 12px;">
+
+  <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0"
+         style="max-width:600px;width:100%;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.4);">
+
+    {# ═══════════════════════════════════════════════ HEADER ═══ #}
+    <tr>
+      <td style="background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);padding:28px 32px 24px;">
+        <p style="margin:0;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#c4b5fd;font-weight:600;">{{ APP_NAME }} · Sales Training</p>
+        <h1 style="margin:6px 0 0;font-size:24px;font-weight:800;color:#ffffff;line-height:1.2;">Reporte semanal 🏋️</h1>
+        <p style="margin:8px 0 0;font-size:14px;color:#ddd6fe;">{{ m.get('period_label_es', '') }}</p>
+      </td>
+    </tr>
+
+    {# ════════════════════════════════════════════ LEADERBOARD ═══ #}
+    <tr>
+      <td style="background:#1e1b4b;padding:24px 32px 20px;">
+        <p style="margin:0 0 16px;font-size:13px;font-weight:700;color:#a5b4fc;letter-spacing:.06em;text-transform:uppercase;">🏆 Ranking de la semana</p>
+
+        {% set medals = ['🥇','🥈','🥉'] %}
+        {% for r in rk %}
+        {% set is_top3 = loop.index <= 3 %}
+        {% set bg = '#312e81' if is_top3 else '#1e293b' %}
+        {% set name_color = '#ffffff' if is_top3 else '#cbd5e1' %}
+        {% set pts_color = '#fbbf24' if is_top3 else '#94a3b8' %}
+
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+               style="background:{{ bg }};border-radius:8px;margin-bottom:4px;{% if is_top3 %}border:1px solid #4f46e5;{% endif %}">
+          <tr>
+            <td width="36" style="padding:10px 4px 10px 12px;font-size:{% if is_top3 %}18{% else %}14{% endif %}px;color:#94a3b8;font-weight:700;text-align:center;">
+              {% if is_top3 %}{{ medals[loop.index0] }}{% else %}{{ r.rank }}{% endif %}
+            </td>
+            <td style="padding:10px 8px;color:{{ name_color }};font-size:13px;font-weight:{% if is_top3 %}700{% else %}500{% endif %};">
+              {{ r.flag if r.flag is defined else '' }} {{ r.name }}
+              {% if r.get('most_improved') %}<span style="font-size:10px;background:#065f46;color:#6ee7b7;padding:2px 6px;border-radius:99px;margin-left:6px;font-weight:600;">⬆ más mejorado</span>{% endif %}
+              {% if r.streak is defined and r.streak >= 3 %}<span style="font-size:10px;background:#7c2d12;color:#fdba74;padding:2px 6px;border-radius:99px;margin-left:4px;">🔥 {{ r.streak }}s racha</span>{% endif %}
+            </td>
+            <td align="right" style="padding:10px 6px;color:{{ pts_color }};font-size:{% if is_top3 %}15{% else %}13{% endif %}px;font-weight:700;white-space:nowrap;">
+              {{ r.points }} pts
+            </td>
+            <td align="right" width="40" style="padding:10px 12px 10px 4px;font-size:13px;text-align:right;">
+              {% set rd = r.get('rank_delta') %}
+              {% if rd is not none and rd != 0 %}
+                {% if rd > 0 %}<span style="color:#10b981;font-weight:700;">↑{{ rd }}</span>{% else %}<span style="color:#ef4444;font-weight:700;">↓{{ rd * -1 }}</span>{% endif %}
+              {% else %}<span style="color:#475569;">→</span>{% endif %}
+            </td>
+          </tr>
+        </table>
+        {% else %}
+        <p style="color:#64748b;font-size:13px;">Sin datos de ranking aún.</p>
+        {% endfor %}
+      </td>
+    </tr>
+
+    {# ═══════════════════════════════════ CALLOUTS FILA ═══ #}
+    {% if co.get('top_performers') or co.get('most_improved') %}
+    <tr>
+      <td style="background:#0f172a;padding:0 32px 0;">
+        <table role="presentation" width="100%" cellspacing="8" cellpadding="0" border="0">
+          <tr>
+            {% if co.get('top_performers') %}
+            <td valign="top" style="background:#052e16;border:1px solid #065f46;border-radius:10px;padding:14px 16px;width:50%;">
+              <p style="margin:0 0 8px;font-size:11px;font-weight:700;color:#6ee7b7;letter-spacing:.06em;text-transform:uppercase;">⭐ Top performers</p>
+              {% for x in co.get('top_performers', [])[:3] %}
+              <p style="margin:0 0 5px;font-size:12px;color:#d1fae5;">
+                {{ '🥇' if loop.first else '·' }} <strong>{{ x.name }}</strong> — {{ x.accuracy_pct }}%
+                <span style="color:#6ee7b7;font-size:11px;">({{ x.answered }} resp.)</span>
+              </p>
+              {% endfor %}
+            </td>
+            {% endif %}
+            {% if co.get('most_active') %}
+            <td valign="top" style="background:#0c1445;border:1px solid #1e3a8a;border-radius:10px;padding:14px 16px;width:50%;">
+              <p style="margin:0 0 8px;font-size:11px;font-weight:700;color:#93c5fd;letter-spacing:.06em;text-transform:uppercase;">⚡ Más activos</p>
+              {% for x in co.get('most_active', [])[:3] %}
+              <p style="margin:0 0 5px;font-size:12px;color:#dbeafe;">
+                {{ '🔥' if loop.first else '·' }} <strong>{{ x.name }}</strong> — {{ x.answered }} resp.
+                <span style="color:#93c5fd;font-size:11px;">{{ x.accuracy_pct }}%</span>
+              </p>
+              {% endfor %}
+            </td>
+            {% endif %}
+          </tr>
+        </table>
+      </td>
+    </tr>
+    {% endif %}
+
+    {# ═══════════════════════════════ EQUIPO — 3 MÉTRICAS ═══ #}
+    <tr>
+      <td style="background:#0f172a;padding:20px 32px 0;">
+        <p style="margin:0 0 14px;font-size:13px;font-weight:700;color:#64748b;letter-spacing:.06em;text-transform:uppercase;">📊 El equipo esta semana</p>
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+          <tr>
+            {# Precisión #}
+            {% set ap = tw.get('accuracy_pct', {}) %}
+            <td align="center" style="background:#1e293b;border-radius:10px;padding:16px 8px;width:33%;">
+              <p style="margin:0;font-size:28px;font-weight:800;color:#f8fafc;">{{ ap.get('current', tm.get('accuracy_pct', '—')) }}%</p>
+              <p style="margin:4px 0 0;font-size:11px;color:#64748b;">Precisión</p>
+              <p style="margin:4px 0 0;font-size:12px;">
+                {% set d = ap.get('delta') %}
+                {% if d is not none and d != 0 %}
+                  {% if d > 0 %}<span style="color:#10b981;">↑ +{{ d }} pp</span>{% else %}<span style="color:#ef4444;">↓ {{ d }} pp</span>{% endif %}
+                {% else %}<span style="color:#475569;">sin cambio</span>{% endif %}
+              </p>
+            </td>
+            <td width="8"></td>
+            {# Respondidas #}
+            {% set an = tw.get('answered', {}) %}
+            <td align="center" style="background:#1e293b;border-radius:10px;padding:16px 8px;width:33%;">
+              <p style="margin:0;font-size:28px;font-weight:800;color:#f8fafc;">{{ an.get('current', tm.get('answered', '—')) }}</p>
+              <p style="margin:4px 0 0;font-size:11px;color:#64748b;">Respondidas</p>
+              <p style="margin:4px 0 0;font-size:12px;">
+                {% set d = an.get('delta') %}
+                {% if d is not none and d != 0 %}
+                  {% if d > 0 %}<span style="color:#10b981;">↑ +{{ d }}</span>{% else %}<span style="color:#ef4444;">↓ {{ d }}</span>{% endif %}
+                {% else %}<span style="color:#475569;">sin cambio</span>{% endif %}
+              </p>
+            </td>
+            <td width="8"></td>
+            {# Correctas #}
+            {% set cr = tw.get('correct', {}) %}
+            <td align="center" style="background:#1e293b;border-radius:10px;padding:16px 8px;width:33%;">
+              <p style="margin:0;font-size:28px;font-weight:800;color:#f8fafc;">{{ cr.get('current', tm.get('correct', '—')) }}</p>
+              <p style="margin:4px 0 0;font-size:11px;color:#64748b;">Correctas</p>
+              <p style="margin:4px 0 0;font-size:12px;">
+                {% set d = cr.get('delta') %}
+                {% if d is not none and d != 0 %}
+                  {% if d > 0 %}<span style="color:#10b981;">↑ +{{ d }}</span>{% else %}<span style="color:#ef4444;">↓ {{ d }}</span>{% endif %}
+                {% else %}<span style="color:#475569;">sin cambio</span>{% endif %}
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    {# ════════════════════════════ ERRORES POR CATEGORÍA ═══ #}
+    {% if by_cat %}
+    <tr>
+      <td style="background:#0f172a;padding:20px 32px 0;">
+        <p style="margin:0 0 14px;font-size:13px;font-weight:700;color:#64748b;letter-spacing:.06em;text-transform:uppercase;">🎯 Dominio por categoría</p>
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+               style="background:#1e293b;border-radius:10px;overflow:hidden;">
+          {% for row in by_cat %}
+          {% set pct = (row.get('accuracy_pct') or 0) | int %}
+          {% if pct < 60 %}{% set bar_color = '#ef4444' %}{% set label_color = '#fca5a5' %}
+          {% elif pct < 75 %}{% set bar_color = '#f59e0b' %}{% set label_color = '#fcd34d' %}
+          {% else %}{% set bar_color = '#10b981' %}{% set label_color = '#6ee7b7' %}{% endif %}
+          {% set wow_d = row.get('wow_accuracy_delta') if row.get('wow_accuracy_delta') is not none else none %}
+          <tr>
+            <td style="padding:10px 14px;font-size:12px;color:#cbd5e1;width:38%;border-bottom:1px solid #0f172a;">{{ row.label }}</td>
+            <td style="padding:10px 8px;border-bottom:1px solid #0f172a;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="background:#0f172a;border-radius:99px;height:6px;overflow:hidden;">
+                    <div style="background:{{ bar_color }};width:{{ pct }}%;height:6px;border-radius:99px;"></div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+            <td align="right" style="padding:10px 6px;font-size:13px;font-weight:700;color:{{ label_color }};white-space:nowrap;width:48px;border-bottom:1px solid #0f172a;">{{ pct }}%</td>
+            <td align="right" style="padding:10px 14px 10px 4px;font-size:11px;white-space:nowrap;width:40px;border-bottom:1px solid #0f172a;">
+              {% if wow_d is not none and wow_d != 0 %}
+                {% if wow_d > 0 %}<span style="color:#10b981;">+{{ wow_d }}</span>{% else %}<span style="color:#ef4444;">{{ wow_d }}</span>{% endif %}
+              {% else %}<span style="color:#475569;">→</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+        <p style="margin:8px 0 0;font-size:11px;color:#475569;">Porcentaje de respuestas correctas · Δ vs semana anterior · 🔴 &lt;60% · 🟡 60–74% · 🟢 ≥75%</p>
+      </td>
+    </tr>
+    {% endif %}
+
+    {# ══════════════════════════════════════════ FEEDBACK ═══ #}
+    {% set fb_cur = fb.get('current', {}) %}
+    {% set fb_count = fb_cur.get('count', 0) %}
+    {% set fb_samples = fb_cur.get('samples', []) %}
+    {% set fb_delta = fb.get('wow_count_delta') %}
+    {% if fb_count > 0 or fb_samples %}
+    <tr>
+      <td style="background:#0f172a;padding:20px 32px 0;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+               style="background:#1a1625;border:1px solid #3b1f6b;border-radius:10px;padding:16px;">
+          <tr>
+            <td>
+              <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#a78bfa;letter-spacing:.06em;text-transform:uppercase;">💬 Feedback del equipo</p>
+              <p style="margin:0 0 12px;font-size:12px;color:#94a3b8;">
+                {{ fb_count }} comentario{{ 's' if fb_count != 1 else '' }} esta semana
+                {% if fb_delta is not none and fb_delta != 0 %}
+                  · {% if fb_delta > 0 %}<span style="color:#10b981;">+{{ fb_delta }} vs semana ant.</span>{% else %}<span style="color:#ef4444;">{{ fb_delta }} vs semana ant.</span>{% endif %}
+                {% endif %}
+              </p>
+              {% for s in fb_samples[:3] %}
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+                     style="background:#0f0d1a;border-radius:8px;margin-bottom:8px;">
+                <tr>
+                  <td style="padding:10px 12px;">
+                    <p style="margin:0 0 4px;font-size:11px;color:#64748b;">{{ s.user_name }} · {{ s.created_at }}</p>
+                    <p style="margin:0;font-size:12px;color:#e2e8f0;line-height:1.5;">{{ s.comment }}</p>
+                  </td>
+                </tr>
+              </table>
+              {% endfor %}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    {% endif %}
+
+    {# ═════════════════════════════════════════════ LOW / INACTIVE ═══ #}
+    {% if co.get('low_performers') or co.get('inactive_no_answers') %}
+    <tr>
+      <td style="background:#0f172a;padding:20px 32px 0;">
+        <table role="presentation" width="100%" cellspacing="8" cellpadding="0" border="0">
+          <tr>
+            {% if co.get('low_performers') %}
+            <td valign="top" style="background:#1c0a0a;border:1px solid #450a0a;border-radius:10px;padding:14px 16px;width:50%;">
+              <p style="margin:0 0 8px;font-size:11px;font-weight:700;color:#fca5a5;letter-spacing:.06em;text-transform:uppercase;">⚠ Necesitan apoyo</p>
+              {% for x in co.get('low_performers', []) %}
+              <p style="margin:0 0 5px;font-size:12px;color:#fecaca;">{{ x.name }} — <strong>{{ x.accuracy_pct }}%</strong> ({{ x.answered }} resp.)</p>
+              {% endfor %}
+            </td>
+            {% endif %}
+            {% if co.get('inactive_no_answers') %}
+            <td valign="top" style="background:#1c1507;border:1px solid #451a03;border-radius:10px;padding:14px 16px;width:50%;">
+              <p style="margin:0 0 8px;font-size:11px;font-weight:700;color:#fcd34d;letter-spacing:.06em;text-transform:uppercase;">😴 Sin actividad</p>
+              {% for x in co.get('inactive_no_answers', []) %}
+              <p style="margin:0 0 5px;font-size:12px;color:#fef3c7;">{{ x.name }}</p>
+              {% endfor %}
+            </td>
+            {% endif %}
+          </tr>
+        </table>
+      </td>
+    </tr>
+    {% endif %}
+
+    {# ══════════════════════════════════════════════════ CTA ═══ #}
+    <tr>
+      <td style="background:#0f172a;padding:28px 32px 32px;text-align:center;">
+        <a href="{{ report_url }}"
+           style="display:inline-block;padding:14px 32px;background:#4f46e5;color:#ffffff;text-decoration:none;
+                  font-weight:700;font-size:15px;border-radius:10px;letter-spacing:.02em;">
+          Ver reporte completo →
+        </a>
+        <p style="margin:16px 0 0;font-size:11px;color:#334155;">{{ APP_NAME }} · Si no ves bien el HTML abre el enlace de arriba</p>
+      </td>
+    </tr>
+
+  </table>
+</td></tr>
+</table>
+</body>
+</html>

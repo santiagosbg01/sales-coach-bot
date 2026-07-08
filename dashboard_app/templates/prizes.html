@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Premios — {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h2 class="text-2xl font-bold text-white">Premios</h2>
+    <p class="text-gray-400 text-sm mt-0.5">{{ prizes | length }} premios · Los reps canjean puntos aquí</p>
+  </div>
+  <a href="/prizes/new"
+     class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+    </svg>
+    Nuevo premio
+  </a>
+</div>
+
+<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+  {% for p in prizes %}
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5 hover:border-gray-700 transition-colors {{ 'opacity-60' if not p.active else '' }}">
+    <div class="flex items-start justify-between">
+      <div>
+        <h3 class="font-semibold text-white">{{ p.name }}</h3>
+        <p class="text-gray-500 text-sm mt-0.5">{{ p.description or '—' }}</p>
+        <p class="text-indigo-400 text-sm mt-2">⭐ {{ p.points_cost }} pts</p>
+        <p class="text-gray-600 text-xs mt-0.5">
+          {% if p.quantity_available is none %}Stock ilimitado{% else %}{{ p.quantity_available }} disponibles{% endif %}
+          {% if not p.active %} · Inactivo{% endif %}
+        </p>
+      </div>
+      <div class="flex gap-1">
+        <a href="/prizes/{{ p.id }}/edit"
+           class="p-1.5 rounded-lg text-gray-400 hover:text-amber-400 hover:bg-amber-900/30 transition-colors"
+           title="Editar">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+          </svg>
+        </a>
+        <form method="post" action="/prizes/{{ p.id }}/delete" class="inline"
+              onsubmit="return confirm('¿Eliminar el premio {{ p.name }}?')">
+          <button type="submit"
+            class="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-900/30 transition-colors"
+            title="Eliminar">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-span-full bg-gray-900 border border-gray-800 rounded-2xl p-12 text-center">
+    <p class="text-gray-500">No hay premios. <a href="/prizes/new" class="text-indigo-400 hover:text-indigo-300">Crear el primero →</a></p>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

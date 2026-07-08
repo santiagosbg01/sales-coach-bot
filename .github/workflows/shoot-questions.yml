@@ -1,0 +1,41 @@
+name: Daily Question Shooter
+
+# Cron schedule DISABLED — questions are now sent exclusively by the
+# Railway bot's APScheduler (services/proactive_sender.py), which has
+# full DB access and sends the correct question per session.
+# Use workflow_dispatch to fire a manual test run if needed.
+on:
+  workflow_dispatch:
+
+jobs:
+  shoot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20   # 9-min max delay + send time per user
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Restore today's per-user sent state (resets automatically on new date)
+      - name: Restore state
+        uses: actions/cache@v4
+        with:
+          path: data/.sent_today.json
+          key: sent-${{ github.run_id }}
+          restore-keys: |
+            sent-daily-
+
+      - name: Send questions
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: python shoot_question.py
+
+      # Persist state across all runs on the same day
+      - name: Save state
+        uses: actions/cache/save@v4
+        with:
+          path: data/.sent_today.json
+          key: sent-daily-${{ github.run_id }}

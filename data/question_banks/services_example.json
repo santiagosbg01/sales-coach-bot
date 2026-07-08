@@ -1,0 +1,123 @@
+{
+  "bank_name": "services_example",
+  "description": "Example question bank for a professional services / consulting sales team — 8 questions covering scoping, pricing, and executive selling.",
+  "questions": [
+    {
+      "prompt": "En una llamada inicial con un CEO, ¿qué es lo primero que debes lograr?",
+      "category": "discovery",
+      "difficulty": "medium",
+      "tags": ["services", "executive_selling", "discovery"],
+      "question_type": "multiple_choice",
+      "product": "product_a",
+      "country": "all",
+      "choices": [
+        {"key": "A", "text": "Explicar tu metodología en detalle"},
+        {"key": "B", "text": "Ganarte el derecho a hacer preguntas mostrando insight de su industria o negocio"},
+        {"key": "C", "text": "Cerrar la primera reunión de scoping"},
+        {"key": "D", "text": "Presentar tu equipo y credenciales"}
+      ],
+      "correct_answer": "B"
+    },
+    {
+      "prompt": "El cliente pregunta '¿cuánto cuesta?' antes de que definas el alcance. ¿Qué haces?",
+      "category": "objections",
+      "difficulty": "medium",
+      "tags": ["services", "pricing", "objections"],
+      "question_type": "open_ended",
+      "product": "product_a",
+      "country": "all",
+      "rubric": {
+        "must_have_concepts": ["no dar cifra sin alcance", "explicar rango basado en casos", "reencauzar a valor"],
+        "good_to_have_concepts": ["comparar con costo de no hacerlo", "próximo paso claro"],
+        "ideal_answer": "No des cifra sin alcance — daña tu credibilidad y arriesga desanclar la conversación. Da rangos basados en casos similares ('proyectos de este tipo van entre X y Y, dependiendo de A, B, C'). Redirige a definir el problema con más detalle: 'para darte un número realista, ayúdame a entender...'",
+        "reference_snippet": "Precio sin alcance es una trampa: si dices bajo perdiste margen, si dices alto perdiste el deal."
+      }
+    },
+    {
+      "prompt": "¿En qué se diferencia una venta de servicios de una venta de producto?",
+      "category": "general",
+      "difficulty": "easy",
+      "tags": ["services", "methodology"],
+      "question_type": "open_ended",
+      "product": "product_a",
+      "country": "all",
+      "rubric": {
+        "must_have_concepts": ["confianza en las personas", "resultado intangible", "riesgo percibido"],
+        "good_to_have_concepts": ["referencias", "propuesta ajustada", "más ciclo de venta"],
+        "ideal_answer": "En servicios vendes personas y resultado prometido, no un objeto verificable. La confianza pesa más que la feature. El ciclo es más largo y el riesgo percibido más alto — por eso las referencias, casos y química con el equipo valen tanto.",
+        "reference_snippet": "En servicios, tú y tu equipo son el producto."
+      }
+    },
+    {
+      "prompt": "Un prospecto pide una propuesta detallada gratis. ¿Qué haces?",
+      "category": "qualification",
+      "difficulty": "hard",
+      "tags": ["services", "qualification", "proposals"],
+      "question_type": "open_ended",
+      "product": "product_a",
+      "country": "all",
+      "rubric": {
+        "must_have_concepts": ["calificar seriedad", "diagnostic call primero", "no regalar consultoría"],
+        "good_to_have_concepts": ["scope of work pagado", "criterios de decisión claros", "múltiples stakeholders"],
+        "ideal_answer": "Primero califica seriedad: presupuesto aproximado, timeline, quién más aprueba. Ofrece un diagnostic call (2 horas) para redactar la propuesta a medida — la propuesta detallada no es un entregable gratis, es parte del proceso pagado o post-calificación estricta.",
+        "reference_snippet": "Propuesta detallada gratis = consultoría regalada. Diagnostica antes."
+      }
+    },
+    {
+      "prompt": "¿Debes cerrar el proyecto por hora o por entregable/valor?",
+      "category": "value_proposition",
+      "difficulty": "medium",
+      "tags": ["services", "pricing"],
+      "question_type": "multiple_choice",
+      "product": "product_a",
+      "country": "all",
+      "choices": [
+        {"key": "A", "text": "Por hora, siempre — es lo más transparente"},
+        {"key": "B", "text": "Por entregable o valor cuando el alcance está claro; por hora solo para descubrimiento o proyectos ambiguos"},
+        {"key": "C", "text": "Por entregable, siempre"},
+        {"key": "D", "text": "Depende del cliente, sin criterio"}
+      ],
+      "correct_answer": "B"
+    },
+    {
+      "prompt": "El cliente dice: 'Ya tenemos un consultor haciendo esto internamente'. ¿Cuál es un buen approach?",
+      "category": "objections",
+      "difficulty": "medium",
+      "tags": ["services", "objections", "competition"],
+      "question_type": "open_ended",
+      "product": "product_a",
+      "country": "all",
+      "rubric": {
+        "must_have_concepts": ["indagar resultados actuales", "no descalificar al consultor", "identificar gap"],
+        "good_to_have_concepts": ["complementar en vez de reemplazar", "segunda opinión", "revisar métricas"],
+        "ideal_answer": "Preguntas: '¿Qué resultados están viendo? ¿Hay algún objetivo pendiente que no han podido mover?' Casi siempre hay un gap. Propón complementar (no reemplazar) o una segunda opinión externa. Nunca descalifiques al otro consultor.",
+        "reference_snippet": "Reemplazar consultores rara vez gana; complementar sí."
+      }
+    },
+    {
+      "prompt": "¿Cuál es la mejor forma de manejar un 'lo tengo que consultar con mi socio'?",
+      "category": "closing",
+      "difficulty": "medium",
+      "tags": ["services", "closing", "objections"],
+      "question_type": "open_ended",
+      "product": "product_a",
+      "country": "all",
+      "rubric": {
+        "must_have_concepts": ["agendar 3-way", "no dejar la venta a otro", "preparar al champion"],
+        "good_to_have_concepts": ["preguntar objeciones del socio", "material para compartir"],
+        "ideal_answer": "Propón una llamada de 3 (tú, prospecto, socio) para responder dudas en vivo — 'me encantaría explicarle directamente para que puedan decidir juntos con toda la información'. Si no es posible, prepara al prospecto: entrégale un one-pager y anticipa las 2-3 objeciones más probables del socio.",
+        "reference_snippet": "Delegar el pitch al champion baja la tasa de cierre 40-60%. Pelea por el 3-way."
+      }
+    },
+    {
+      "prompt": "¿Es apropiado enviar tu tarifa por email si el cliente la pide?",
+      "category": "closing",
+      "difficulty": "easy",
+      "tags": ["services", "pricing"],
+      "question_type": "yes_no",
+      "product": "product_a",
+      "country": "all",
+      "correct_answer": "no"
+    }
+  ]
+}

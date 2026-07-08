@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}Preguntas — {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h2 class="text-2xl font-bold text-white">Banco de preguntas</h2>
+    <p class="text-gray-400 text-sm mt-0.5">{{ questions | length }} preguntas activas</p>
+  </div>
+  <div class="flex items-center gap-3">
+    <form action="/admin/sync-questions" method="post" class="inline"
+          onsubmit="return confirm('¿Sincronizar todas las preguntas desde data/*.json? Se actualizarán las existentes y se añadirán las nuevas.');">
+      <button type="submit"
+         class="inline-flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm font-medium px-4 py-2.5 rounded-lg transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Sincronizar desde JSON
+      </button>
+    </form>
+    <a href="/questions/new"
+     class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+    </svg>
+    Nueva pregunta
+  </a>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="flex flex-wrap gap-2 mb-5 text-xs">
+  <button onclick="filterType('')"    id="f-all" class="filter-btn active">Todas</button>
+  <button onclick="filterType('multiple_choice')" id="f-mc"  class="filter-btn">OM</button>
+  <button onclick="filterType('yes_no')"           id="f-yn"  class="filter-btn">Sí/No</button>
+  <button onclick="filterType('open_ended')"       id="f-oe"  class="filter-btn">Abierta</button>
+  <div class="ml-auto">
+    <input id="search" type="text" placeholder="Buscar…"
+      oninput="filterSearch(this.value)"
+      class="bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 w-48"/>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm" id="qTable">
+      <thead>
+        <tr class="border-b border-gray-800 text-gray-500 text-xs uppercase tracking-wider">
+          <th class="px-4 py-3 text-left w-8">#</th>
+          <th class="px-4 py-3 text-left">Pregunta</th>
+          <th class="px-4 py-3 text-left">Producto</th>
+          <th class="px-4 py-3 text-left">País</th>
+          <th class="px-4 py-3 text-center">Tipo</th>
+          <th class="px-4 py-3 text-center">Dif.</th>
+          <th class="px-4 py-3 text-center">Estado</th>
+          <th class="px-4 py-3 text-center">Intentos</th>
+          <th class="px-4 py-3 text-center">% Acierto</th>
+          <th class="px-4 py-3 text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-800" id="tbody">
+        {% for q in questions %}
+        <tr class="q-row hover:bg-gray-800/40 transition-colors" data-type="{{ q.qtype }}" data-text="{{ q.prompt | lower }}">
+          <td class="px-4 py-3 text-gray-600 text-xs">{{ q.id }}</td>
+          <td class="px-4 py-3 text-gray-300 max-w-sm">
+            <span class="line-clamp-2 text-xs">{{ q.prompt }}</span>
+          </td>
+          <td class="px-4 py-3 text-gray-400 text-xs">{{ q.product }}</td>
+          <td class="px-4 py-3 text-gray-500 text-xs">{{ q.country }}</td>
+          <td class="px-4 py-3 text-center">
+            {% if q.qtype == 'multiple_choice' %}<span class="badge-mc">OM</span>
+            {% elif q.qtype == 'yes_no' %}<span class="badge-yn">S/N</span>
+            {% else %}<span class="badge-oe">Abierta</span>{% endif %}
+          </td>
+          <td class="px-4 py-3 text-center">
+            {% if q.diff == 'easy' %}<span class="badge-easy">Fácil</span>
+            {% elif q.diff == 'hard' %}<span class="badge-hard">Difícil</span>
+            {% else %}<span class="badge-medium">Media</span>{% endif %}
+          </td>
+          <td class="px-4 py-3 text-center">
+            {% if q.active %}
+              <span class="inline-block w-2 h-2 rounded-full bg-emerald-400" title="Activa"></span>
+            {% else %}
+              <span class="inline-block w-2 h-2 rounded-full bg-gray-600" title="Inactiva"></span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-center text-gray-400 text-xs">{{ q.attempts }}</td>
+          <td class="px-4 py-3 text-center">
+            {% if q.pct is not none %}
+            <div class="flex items-center justify-center gap-1.5">
+              <div class="w-12 bg-gray-800 rounded-full h-1.5">
+                <div class="h-1.5 rounded-full {{ 'bg-emerald-500' if q.pct >= 70 else ('bg-amber-500' if q.pct >= 40 else 'bg-red-500') }}"
+                     style="width:{{ q.pct }}%"></div>
+              </div>
+              <span class="text-xs {{ 'text-emerald-400' if q.pct >= 70 else ('text-amber-400' if q.pct >= 40 else 'text-red-400') }}">{{ q.pct }}%</span>
+            </div>
+            {% else %}<span class="text-gray-600 text-xs">—</span>{% endif %}
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex items-center justify-center gap-1">
+              <!-- Edit -->
+              <a href="/questions/{{ q.id }}/edit"
+                 class="p-1.5 rounded-lg text-gray-400 hover:text-indigo-400 hover:bg-indigo-900/30 transition-colors"
+                 title="Editar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+              </a>
+              <!-- Toggle active -->
+              <form method="post" action="/questions/{{ q.id }}/toggle" class="inline">
+                <button type="submit"
+                  class="p-1.5 rounded-lg transition-colors
+                    {{ 'text-emerald-400 hover:text-amber-400 hover:bg-amber-900/30' if q.active else 'text-gray-500 hover:text-emerald-400 hover:bg-emerald-900/30' }}"
+                  title="{{ 'Desactivar' if q.active else 'Activar' }}">
+                  {% if q.active %}
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  {% else %}
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  {% endif %}
+                </button>
+              </form>
+              <!-- Delete -->
+              <form method="post" action="/questions/{{ q.id }}/delete" class="inline"
+                    onsubmit="return confirm('¿Eliminar pregunta #{{ q.id }}?')">
+                <button type="submit"
+                  class="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-900/30 transition-colors"
+                  title="Eliminar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="10" class="px-6 py-12 text-center text-gray-600">
+            No hay preguntas.
+            <a href="/questions/new" class="text-indigo-400 hover:text-indigo-300 ml-1">Crear la primera →</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+  .filter-btn { @apply px-3 py-1.5 rounded-full border border-gray-700 text-gray-400 hover:border-indigo-500 hover:text-indigo-400 transition-colors; }
+  .filter-btn.active { border-color: #6366f1; color: #818cf8; background: rgba(99,102,241,0.15); }
+  .line-clamp-2 { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+</style>
+<script>
+let activeType = '';
+
+function filterType(type) {
+  activeType = type;
+  applyFilters();
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  const map = { '': 'f-all', 'multiple_choice': 'f-mc', 'yes_no': 'f-yn', 'open_ended': 'f-oe' };
+  const el = document.getElementById(map[type]);
+  if (el) el.classList.add('active');
+}
+
+function filterSearch(val) {
+  applyFilters(val.toLowerCase());
+}
+
+function applyFilters(searchVal) {
+  if (searchVal === undefined) searchVal = (document.getElementById('search').value || '').toLowerCase();
+  document.querySelectorAll('.q-row').forEach(r => {
+    const typeOk   = !activeType || r.dataset.type === activeType;
+    const searchOk = !searchVal || r.dataset.text.includes(searchVal);
+    r.style.display = (typeOk && searchOk) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

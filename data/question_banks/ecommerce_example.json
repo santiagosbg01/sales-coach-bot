@@ -1,0 +1,149 @@
+{
+  "bank_name": "ecommerce_example",
+  "description": "Example question bank for an ecommerce / marketplace sales team — 10 questions covering merchant onboarding, GMV growth, and objection handling.",
+  "questions": [
+    {
+      "prompt": "Un merchant te pregunta: '¿Cuánto voy a vender aquí?'. ¿Cuál es la mejor respuesta?",
+      "category": "objections",
+      "difficulty": "medium",
+      "tags": ["ecommerce", "objections", "onboarding"],
+      "question_type": "open_ended",
+      "product": "product_a",
+      "country": "all",
+      "rubric": {
+        "must_have_concepts": ["no prometer números específicos", "depende del catálogo y precio", "casos comparables"],
+        "good_to_have_concepts": ["benchmarks de categoría", "primeros 30 días", "acompañamiento"],
+        "ideal_answer": "Nunca prometas cifras específicas. Explica que depende del catálogo, precio, calidad de imágenes y velocidad de respuesta. Comparte benchmarks de la categoría y merchants comparables. Propón una prueba de 30 días con acompañamiento activo.",
+        "reference_snippet": "Prometer GMV sin data es el error más común y genera churn temprano."
+      }
+    },
+    {
+      "prompt": "¿Cuál es el mejor indicador temprano de que un merchant nuevo va a tener éxito?",
+      "category": "qualification",
+      "difficulty": "medium",
+      "tags": ["ecommerce", "qualification"],
+      "question_type": "multiple_choice",
+      "product": "product_a",
+      "country": "all",
+      "choices": [
+        {"key": "A", "text": "Tamaño del catálogo publicado"},
+        {"key": "B", "text": "Tiempo de respuesta a las primeras órdenes < 2 horas"},
+        {"key": "C", "text": "Precio promedio por producto"},
+        {"key": "D", "text": "Antigüedad de la marca"}
+      ],
+      "correct_answer": "B"
+    },
+    {
+      "prompt": "El merchant dice que la comisión es más alta que en otras plataformas. ¿Cómo respondes?",
+      "category": "objections",
+      "difficulty": "medium",
+      "tags": ["ecommerce", "objections", "pricing"],
+      "question_type": "open_ended",
+      "product": "product_a",
+      "country": "all",
+      "rubric": {
+        "must_have_concepts": ["comisión vs. valor entregado", "tráfico", "conversión"],
+        "good_to_have_concepts": ["ticket promedio", "recompra", "costo de adquisición ahorrado"],
+        "ideal_answer": "La comisión sola no es comparable — hay que mirar tráfico calificado, conversión, ticket promedio y recompra. Un 15% donde vendes el triple es más rentable que un 8% donde no hay demanda.",
+        "reference_snippet": "El indicador correcto es CAC efectivo, no % de comisión aislado."
+      }
+    },
+    {
+      "prompt": "¿Debes ofrecer descuento en comisión para cerrar merchants grandes?",
+      "category": "closing",
+      "difficulty": "easy",
+      "tags": ["ecommerce", "closing", "pricing"],
+      "question_type": "yes_no",
+      "product": "product_a",
+      "country": "all",
+      "correct_answer": "no"
+    },
+    {
+      "prompt": "En la primera semana, ¿qué acción tiene mayor impacto en el GMV del merchant?",
+      "category": "discovery",
+      "difficulty": "medium",
+      "tags": ["ecommerce", "onboarding", "gmv"],
+      "question_type": "multiple_choice",
+      "product": "product_a",
+      "country": "all",
+      "choices": [
+        {"key": "A", "text": "Subir muchos productos rápido"},
+        {"key": "B", "text": "Asegurar que los primeros 10 productos tengan fotos profesionales, título optimizado y stock real"},
+        {"key": "C", "text": "Pagar publicidad interna de la plataforma"},
+        {"key": "D", "text": "Bajar precios al mínimo"}
+      ],
+      "correct_answer": "B"
+    },
+    {
+      "prompt": "Un merchant tiene 30 productos publicados pero cero ventas en 2 semanas. ¿Cuál es el primer diagnóstico?",
+      "category": "discovery",
+      "difficulty": "hard",
+      "tags": ["ecommerce", "diagnostics"],
+      "question_type": "open_ended",
+      "product": "product_a",
+      "country": "all",
+      "rubric": {
+        "must_have_concepts": ["revisar precio vs. mercado", "calidad de fotos", "títulos y categorías"],
+        "good_to_have_concepts": ["stock real", "búsqueda por keywords", "reviews o falta de ellas"],
+        "ideal_answer": "Diagnóstico rápido: 1) comparar precios contra 3 competidores en la misma categoría, 2) revisar calidad de fotos y descripciones, 3) validar que los títulos incluyen las palabras que los usuarios buscan. Sin visibilidad no hay ventas por más catálogo que suba.",
+        "reference_snippet": "Visibilidad + precio + confianza = venta. Falta alguno y no compra nadie."
+      }
+    },
+    {
+      "prompt": "¿La propuesta de valor a un merchant B2B es igual que a un merchant D2C?",
+      "category": "value_proposition",
+      "difficulty": "easy",
+      "tags": ["ecommerce", "value_proposition", "segmentation"],
+      "question_type": "yes_no",
+      "product": "product_a",
+      "country": "all",
+      "correct_answer": "no"
+    },
+    {
+      "prompt": "¿Cuál es la mejor forma de retener a un merchant que amenaza con irse a la competencia?",
+      "category": "objections",
+      "difficulty": "hard",
+      "tags": ["ecommerce", "retention"],
+      "question_type": "open_ended",
+      "product": "product_a",
+      "country": "all",
+      "rubric": {
+        "must_have_concepts": ["entender el motivo real", "no ofrecer descuento primero", "revisar métricas juntos"],
+        "good_to_have_concepts": ["plan de acción concreto", "escalar a success", "compromiso mutuo"],
+        "ideal_answer": "Primero: entender el motivo real (¿es precio, es servicio, es tráfico?). Nunca descontar de reflejo. Revisa métricas juntos, identifica dónde está el gap y propón un plan de acción de 30 días con métricas de éxito claras y check-ins semanales.",
+        "reference_snippet": "El churn no se combate con descuentos; se combate con acompañamiento medible."
+      }
+    },
+    {
+      "prompt": "¿Cuál es la métrica más importante en el reporte mensual que le compartes al merchant?",
+      "category": "general",
+      "difficulty": "medium",
+      "tags": ["ecommerce", "reporting"],
+      "question_type": "multiple_choice",
+      "product": "product_a",
+      "country": "all",
+      "choices": [
+        {"key": "A", "text": "Número de visitas a sus productos"},
+        {"key": "B", "text": "GMV + take rate + recompra + comparativo vs. mes anterior y vs. categoría"},
+        {"key": "C", "text": "Solo el GMV bruto"},
+        {"key": "D", "text": "Cantidad de productos publicados"}
+      ],
+      "correct_answer": "B"
+    },
+    {
+      "prompt": "Escribe una frase que uses para pedir referidos a un merchant satisfecho.",
+      "category": "closing",
+      "difficulty": "medium",
+      "tags": ["ecommerce", "referrals", "growth"],
+      "question_type": "open_ended",
+      "product": "product_a",
+      "country": "all",
+      "rubric": {
+        "must_have_concepts": ["pedir explícitamente", "específico", "facilitar la introducción"],
+        "good_to_have_concepts": ["compensación o valor", "email listo para reenviar", "número concreto de nombres"],
+        "ideal_answer": "'Me alegra que estés viendo resultados. Si conoces a otros 2-3 merchants que podrían beneficiarse igual, ¿me los presentas por email? Te preparo el mensaje listo para reenviar.'",
+        "reference_snippet": "La referencia no llega sola: pídela con guion claro y facilita la acción."
+      }
+    }
+  ]
+}

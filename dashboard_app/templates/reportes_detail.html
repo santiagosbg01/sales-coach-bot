@@ -1,0 +1,387 @@
+{% extends "base.html" %}
+{% block title %}Reporte semanal — {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+{% set m = payload.get('meta', {}) %}
+{% set team = payload.get('team', {}) %}
+{% set tm = team.get('metrics', {}) %}
+{% set tw = team.get('wow', {}) %}
+
+<div class="mb-6">
+  <a href="{{ url_for('dashboard.reportes_index') }}" class="text-sm text-indigo-400 hover:text-indigo-300">← Volver a reportes</a>
+  <h1 class="text-2xl font-bold text-white mt-2">Reporte semanal</h1>
+  <p class="text-gray-400 text-sm mt-1">{{ m.get('period_label_es', '') }}</p>
+  <p class="text-gray-600 text-xs mt-1">Snapshot #{{ snap.id }} · generado {{ m.get('generated_at_utc', '') }}</p>
+</div>
+
+{# ── Panel de envío por correo ── #}
+{% if email is defined %}
+<div class="mb-6 bg-gray-900 border border-gray-800 rounded-2xl p-5">
+  <div class="flex items-start justify-between gap-4 mb-3">
+    <div>
+      <h2 class="text-sm font-semibold text-white">Enviar por correo</h2>
+      <p class="text-xs text-gray-500 mt-1">
+        De: <span class="text-gray-300">{{ email.mail_from or '—' }}</span>
+        · Envío: <span class="{{ 'text-emerald-400' if email.smtp_ready else 'text-red-400' }}">
+          {{ 'configurado (' ~ email.smtp_host ~ ')' if email.smtp_ready else 'no configurado' }}
+        </span>
+        · Destinatarios en lista: <span class="text-gray-300">{{ email.recipients|length }}</span>
+      </p>
+    </div>
+  </div>
+
+  {% if not email.smtp_ready %}
+  <div class="p-3 rounded-lg bg-red-900/30 border border-red-800 text-red-200 text-xs">
+    Railway bloquea puertos SMTP (25/465/587). Usa <b>Resend</b> vía HTTPS:
+    define <code class="bg-black/30 px-1 py-0.5 rounded">RESEND_API_KEY</code>
+    y <code class="bg-black/30 px-1 py-0.5 rounded">WEEKLY_REPORT_EMAIL_FROM</code>
+    en Railway › Variables y redeploya el dashboard.
+    Alternativa: SMTP con <code>SMTP_HOST</code>, <code>SMTP_PORT</code>,
+    <code>SMTP_USER</code>, <code>SMTP_PASSWORD</code> (solo funciona si tu host permite salida SMTP).
+  </div>
+  {% endif %}
+
+  <div class="grid md:grid-cols-2 gap-4 mt-4">
+    {# Prueba a un correo #}
+    <form method="post" action="{{ url_for('dashboard.reportes_email_send', rid=snap.id) }}"
+          class="bg-gray-950/40 border border-gray-800 rounded-xl p-4">
+      <input type="hidden" name="mode" value="test"/>
+      <label class="block text-xs text-gray-400 mb-1">Enviar prueba a (separar por coma para varios)</label>
+      <input type="text" name="to" required placeholder="you@example.com"
+             class="w-full text-sm rounded-lg bg-gray-900 border border-gray-700 text-gray-100 px-3 py-2 focus:outline-none focus:border-indigo-500"/>
+      <button type="submit" {% if not email.smtp_ready %}disabled{% endif %}
+              class="mt-3 inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium
+                     {{ 'bg-indigo-600 hover:bg-indigo-500 text-white' if email.smtp_ready else 'bg-gray-800 text-gray-500 cursor-not-allowed' }}">
+        Enviar prueba
+      </button>
+      <p class="mt-2 text-xs text-gray-500">Asunto con prefijo «[PRUEBA {{ APP_NAME }}]».</p>
+    </form>
+
+    {# Envío real a la lista #}
+    <form method="post" action="{{ url_for('dashboard.reportes_email_send', rid=snap.id) }}"
+          class="bg-gray-950/40 border border-gray-800 rounded-xl p-4"
+          onsubmit="return confirm('¿Enviar este reporte a {{ email.recipients|length }} destinatarios reales?');">
+      <input type="hidden" name="mode" value="full"/>
+      <p class="text-xs text-gray-400">Enviar a la lista completa ({{ email.recipients|length }} direcciones)</p>
+      <details class="mt-2">
+        <summary class="cursor-pointer text-xs text-gray-500 hover:text-gray-300">Ver destinatarios</summary>
+        <div class="mt-2 max-h-32 overflow-auto text-xs text-gray-400 font-mono leading-5 p-2 bg-black/30 rounded">
+          {% for addr in email.recipients %}
+          <div>{{ addr }}</div>
+          {% endfor %}
+        </div>
+      </details>
+      <button type="submit" {% if not email.smtp_ready %}disabled{% endif %}
+              class="mt-3 inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium
+                     {{ 'bg-emerald-600 hover:bg-emerald-500 text-white' if email.smtp_ready else 'bg-gray-800 text-gray-500 cursor-not-allowed' }}">
+        Enviar ahora a todos
+      </button>
+      <p class="mt-2 text-xs text-gray-500">Los viernes 10:00 (CST) este envío ya corre solo.</p>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+{# ── Insights ── #}
+{% if payload.get('insights') %}
+<div class="mb-6 bg-indigo-950/40 border border-indigo-800/60 rounded-2xl p-4">
+  <h2 class="text-sm font-semibold text-indigo-200 mb-2">Insights (vs semana anterior)</h2>
+  <ul class="list-disc list-inside text-sm text-gray-300 space-y-1">
+    {% for line in payload.insights %}
+    <li>{{ line }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{# ── Equipo total ── #}
+<div class="mb-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+  {% for key, label in [('sent','Enviadas'), ('answered','Respondidas'), ('correct','Correctas'), ('incorrect','Incorrectas'), ('expired','Expiradas')] %}
+  {% set w = tw.get(key, {}) %}
+  <div class="bg-gray-900 border border-gray-800 rounded-xl p-3">
+    <p class="text-xs text-gray-500">{{ label }}</p>
+    <p class="text-xl font-semibold text-white tabular-nums">{{ w.get('current', tm.get(key, '—')) }}</p>
+    {% if w.get('previous') is not none %}
+    <p class="text-xs text-gray-500 mt-1">Ant: {{ w.previous }}
+      {% if w.delta is defined and w.delta != 0 %}
+      <span class="{% if w.delta > 0 %}text-emerald-400{% else %}text-red-400{% endif %}">({{ '%+d'|format(w.delta) }})</span>
+      {% endif %}
+    </p>
+    {% endif %}
+  </div>
+  {% endfor %}
+  <div class="bg-gray-900 border border-gray-800 rounded-xl p-3">
+    <p class="text-xs text-gray-500">Precisión</p>
+    {% set ap = tw.get('accuracy_pct') or {} %}
+    <p class="text-xl font-semibold text-white tabular-nums">{{ ap.get('current', '—') }}%</p>
+    {% if ap.get('delta') is not none %}
+    <p class="text-xs text-gray-500 mt-1">Δ vs ant: <span class="{% if ap.delta > 0 %}text-emerald-400{% elif ap.delta < 0 %}text-red-400{% endif %}">{{ '%+d'|format(ap.delta) }} pp</span></p>
+    {% endif %}
+  </div>
+  <div class="bg-gray-900 border border-gray-800 rounded-xl p-3">
+    <p class="text-xs text-gray-500">Promedio nota</p>
+    <p class="text-xl font-semibold text-white tabular-nums">{{ (tm.get('avg_score') if tm.get('avg_score') is not none else '—') }}</p>
+    {% set av = tw.get('avg_score') or {} %}
+    {% if av.get('delta') is not none %}
+    <p class="text-xs text-gray-500 mt-1">Δ: {{ '%+.2f'|format(av.delta) }}</p>
+    {% endif %}
+  </div>
+</div>
+
+{# ── Callouts ── #}
+{% set co = payload.get('callouts', {}) %}
+<div class="mb-6 grid md:grid-cols-2 gap-4">
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+    <h2 class="text-sm font-semibold text-emerald-300 mb-3">Top performers (precisión, mín. 3 resp.)</h2>
+    <ul class="text-sm text-gray-300 space-y-2">
+      {% for x in co.get('top_performers', []) %}
+      <li><span class="text-white font-medium">{{ x.name }}</span> — {{ x.accuracy_pct }}% · {{ x.answered }} resp.</li>
+      {% else %}
+      <li class="text-gray-500">Sin datos suficientes.</li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+    <h2 class="text-sm font-semibold text-sky-300 mb-3">Más activos</h2>
+    <ul class="text-sm text-gray-300 space-y-2">
+      {% for x in co.get('most_active', []) %}
+      <li><span class="text-white font-medium">{{ x.name }}</span> — {{ x.answered }} resp. · {{ x.accuracy_pct }}%</li>
+      {% else %}
+      <li class="text-gray-500">Sin datos.</li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+    <h2 class="text-sm font-semibold text-amber-300 mb-3">Low performers (actividad con baja precisión)</h2>
+    <ul class="text-sm text-gray-300 space-y-2">
+      {% for x in co.get('low_performers', []) %}
+      <li><span class="text-white font-medium">{{ x.name }}</span> — {{ x.accuracy_pct }}% · {{ x.answered }} resp.</li>
+      {% else %}
+      <li class="text-gray-500">Nadie califica con volumen suficiente.</li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+    <h2 class="text-sm font-semibold text-red-300 mb-3">Inactivos (0 respuestas en la semana)</h2>
+    <ul class="text-sm text-gray-300 space-y-2">
+      {% for x in co.get('inactive_no_answers', []) %}
+      <li><span class="text-white font-medium">{{ x.name }}</span> — enviadas {{ x.sent }}</li>
+      {% else %}
+      <li class="text-gray-500">Todos respondieron al menos una.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+{# ── Por país / equipo ── #}
+<div class="mb-6 grid lg:grid-cols-2 gap-4">
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 overflow-x-auto">
+    <h2 class="text-sm font-semibold text-white mb-3">Por país (reps activos)</h2>
+    <table class="min-w-full text-xs">
+      <thead><tr class="text-gray-500 border-b border-gray-800">
+        <th class="text-left py-2 pr-2">País</th><th class="text-right py-2 pr-2">Reps</th>
+        <th class="text-right py-2 pr-2">Precisión</th><th class="text-right py-2">Δ pp</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-800">
+        {% for row in payload.get('by_country', []) %}
+        {% set mm = row.metrics %}
+        {% set ww = row.wow.get('accuracy_pct', {}) %}
+        <tr>
+          <td class="py-2 pr-2">{{ row.flag }} {{ row.label }}</td>
+          <td class="text-right py-2 pr-2 text-gray-400">{{ row.reps }}</td>
+          <td class="text-right py-2 pr-2 tabular-nums">{{ ww.current if ww else '—' }}%</td>
+          <td class="text-right py-2 tabular-nums {% if (ww.delta or 0) > 0 %}text-emerald-400{% elif (ww.delta or 0) < 0 %}text-red-400{% else %}text-gray-500{% endif %}">
+            {% if ww.delta is not none %}{{ '%+d'|format(ww.delta) }}{% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 overflow-x-auto">
+    <h2 class="text-sm font-semibold text-white mb-3">Por equipo (grupo)</h2>
+    <table class="min-w-full text-xs">
+      <thead><tr class="text-gray-500 border-b border-gray-800">
+        <th class="text-left py-2 pr-2">Grupo</th><th class="text-right py-2 pr-2">Reps</th>
+        <th class="text-right py-2 pr-2">Precisión</th><th class="text-right py-2">Δ pp</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-800">
+        {% for row in payload.get('by_team', []) %}
+        {% set ww = row.wow.get('accuracy_pct', {}) %}
+        <tr>
+          <td class="py-2 pr-2 text-gray-200">{{ row.group_name }}</td>
+          <td class="text-right py-2 pr-2 text-gray-400">{{ row.reps }}</td>
+          <td class="text-right py-2 pr-2 tabular-nums">{{ ww.current if ww else '—' }}%</td>
+          <td class="text-right py-2 tabular-nums {% if (ww.delta or 0) > 0 %}text-emerald-400{% elif (ww.delta or 0) < 0 %}text-red-400{% else %}text-gray-500{% endif %}">
+            {% if ww.delta is not none %}{{ '%+d'|format(ww.delta) }}{% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# ── Conocimiento vertical ── #}
+{% set kv = payload.get('knowledge_vertical', {}) %}
+<div class="mb-6 grid lg:grid-cols-2 gap-4">
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 overflow-x-auto">
+    <h2 class="text-sm font-semibold text-white mb-3">Por vertical (producto)</h2>
+    <table class="min-w-full text-xs">
+      <thead><tr class="text-gray-500 border-b border-gray-800">
+        <th class="text-left py-2 pr-2">Vertical</th><th class="text-right py-2 pr-2">Resp.</th>
+        <th class="text-right py-2 pr-2">%</th><th class="text-right py-2">Δ pp</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-800">
+        {% for row in kv.get('by_product', []) %}
+        <tr>
+          <td class="py-2 pr-2">{{ row.label }}</td>
+          <td class="text-right py-2 pr-2">{{ row.answered }}</td>
+          <td class="text-right py-2 pr-2">{{ row.accuracy_pct }}%</td>
+          <td class="text-right py-2 {% if (row.wow_accuracy_delta or 0) > 0 %}text-emerald-400{% elif (row.wow_accuracy_delta or 0) < 0 %}text-red-400{% else %}text-gray-500{% endif %}">
+            {% if row.wow_accuracy_delta is not none %}{{ '%+d'|format(row.wow_accuracy_delta) }}{% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 overflow-x-auto">
+    <h2 class="text-sm font-semibold text-white mb-3">Por categoría de pregunta</h2>
+    <table class="min-w-full text-xs">
+      <thead><tr class="text-gray-500 border-b border-gray-800">
+        <th class="text-left py-2 pr-2">Categoría</th><th class="text-right py-2 pr-2">Resp.</th>
+        <th class="text-right py-2 pr-2">%</th><th class="text-right py-2">Δ pp</th>
+      </tr></thead>
+      <tbody class="divide-y divide-gray-800">
+        {% for row in kv.get('by_category', []) %}
+        <tr>
+          <td class="py-2 pr-2">{{ row.label }}</td>
+          <td class="text-right py-2 pr-2">{{ row.answered }}</td>
+          <td class="text-right py-2 pr-2">{{ row.accuracy_pct }}%</td>
+          <td class="text-right py-2 {% if (row.wow_accuracy_delta or 0) > 0 %}text-emerald-400{% elif (row.wow_accuracy_delta or 0) < 0 %}text-red-400{% else %}text-gray-500{% endif %}">
+            {% if row.wow_accuracy_delta is not none %}{{ '%+d'|format(row.wow_accuracy_delta) }}{% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# ── Errores comunes + feedback + canjes ── #}
+<div class="mb-6 grid lg:grid-cols-3 gap-4">
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 lg:col-span-2">
+    <h2 class="text-sm font-semibold text-white mb-3">Errores más comunes (pregunta)</h2>
+    <ol class="text-sm text-gray-300 space-y-2 list-decimal list-inside">
+      {% for x in payload.get('common_errors', {}).get('current', []) %}
+      <li><span class="text-gray-500">#{{ x.question_id }}</span> — {{ x.prompt }} <span class="text-red-400">({{ x.wrong_count }})</span></li>
+      {% else %}
+      <li class="text-gray-500">Sin incorrectas graduadas en el periodo.</li>
+      {% endfor %}
+    </ol>
+  </div>
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+    <h2 class="text-sm font-semibold text-white mb-3">Canjes</h2>
+    {% set rc = payload.get('redemptions', {}).get('current', {}) %}
+    {% set rw = payload.get('redemptions', {}).get('wow', {}) %}
+    <p class="text-sm text-gray-300">Canjes: <span class="text-white font-medium">{{ rc.count }}</span>
+      <span class="text-gray-500">(Δ {{ '%+d'|format(rw.count_delta or 0) }})</span></p>
+    <p class="text-sm text-gray-300 mt-1">Puntos: <span class="text-white font-medium">{{ rc.points_spent }}</span>
+      <span class="text-gray-500">(Δ {{ '%+d'|format(rw.points_delta or 0) }})</span></p>
+    <ul class="mt-3 text-xs text-gray-400 space-y-1">
+      {% for p in rc.get('by_prize', [])[:6] %}
+      <li>{{ p.name }}: {{ p.count }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+{% set fb = payload.get('feedback', {}) %}
+<div class="mb-6 bg-gray-900 border border-gray-800 rounded-2xl p-4">
+  <h2 class="text-sm font-semibold text-white mb-2">Feedback recibido</h2>
+  <p class="text-xs text-gray-500 mb-3">Comentarios en el periodo: {{ fb.get('current', {}).get('count', 0) }}
+    · semana anterior: {{ fb.get('previous_count', 0) }}
+    · Δ: {{ '%+d'|format(fb.get('wow_count_delta') or 0) }}</p>
+  <ul class="text-sm text-gray-300 space-y-2 divide-y divide-gray-800">
+    {% for s in fb.get('current', {}).get('samples', []) %}
+    <li class="pt-2 first:pt-0">
+      <span class="text-gray-500 text-xs">{{ s.created_at }} · {{ s.user_name }}{% if s.handled %} · atendido{% endif %}</span><br/>
+      {{ s.comment }}
+    </li>
+    {% else %}
+    <li class="text-gray-500">Sin muestras en el periodo.</li>
+    {% endfor %}
+  </ul>
+</div>
+
+{# ── Ejecutivos ── #}
+<div class="mb-6 bg-gray-900 border border-gray-800 rounded-2xl p-4 overflow-x-auto">
+  <h2 class="text-sm font-semibold text-white mb-3">Por ejecutivo</h2>
+  <table class="min-w-full text-xs">
+    <thead><tr class="text-gray-500 border-b border-gray-800">
+      <th class="text-left py-2 pr-2">Nombre</th><th class="text-left py-2 pr-2">Grupo</th>
+      <th class="text-right py-2 pr-2">Env.</th><th class="text-right py-2 pr-2">Resp.</th>
+      <th class="text-right py-2 pr-2">OK</th><th class="text-right py-2 pr-2">%</th><th class="text-right py-2">Δ pp</th>
+    </tr></thead>
+    <tbody class="divide-y divide-gray-800">
+      {% for ex in payload.get('executives', []) %}
+      {% set mm = ex.metrics %}
+      {% set ww = ex.wow.get('accuracy_pct', {}) %}
+      <tr>
+        <td class="py-2 pr-2 whitespace-nowrap">{{ ex.flag }} {{ ex.name }}</td>
+        <td class="py-2 pr-2 text-gray-400">{{ ex.group }}</td>
+        <td class="text-right py-2 pr-2">{{ mm.sent }}</td>
+        <td class="text-right py-2 pr-2">{{ mm.answered }}</td>
+        <td class="text-right py-2 pr-2">{{ mm.correct }}</td>
+        <td class="text-right py-2 pr-2">{{ ex.accuracy_pct }}%</td>
+        <td class="text-right py-2 {% if (ww.delta or 0) > 0 %}text-emerald-400{% elif (ww.delta or 0) < 0 %}text-red-400{% else %}text-gray-500{% endif %}">
+          {% if ww.delta is not none %}{{ '%+d'|format(ww.delta) }}{% else %}—{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{# ── Ranking puntos ── #}
+<div class="mb-6 bg-gray-900 border border-gray-800 rounded-2xl p-4 overflow-x-auto">
+  <h2 class="text-sm font-semibold text-white mb-3">Ranking (puntos · snapshot al generar)</h2>
+  <p class="text-xs text-gray-500 mb-2">Δ pos.: vs ranking guardado en el reporte de la semana anterior (si existe).</p>
+  <table class="min-w-full text-xs">
+    <thead><tr class="text-gray-500 border-b border-gray-800">
+      <th class="text-right py-2 pr-2">#</th><th class="text-left py-2 pr-2">Ejecutivo</th>
+      <th class="text-right py-2 pr-2">Puntos</th><th class="text-right py-2 pr-2">Racha</th>
+      <th class="text-right py-2">Δ pos.</th>
+    </tr></thead>
+    <tbody class="divide-y divide-gray-800">
+      {% for r in payload.get('ranking', {}).get('rows', []) %}
+      <tr>
+        <td class="text-right py-2 pr-2 text-gray-400">{{ r.rank }}</td>
+        <td class="py-2 pr-2">{{ r.flag }} {{ r.name }}</td>
+        <td class="text-right py-2 pr-2">{{ r.points }}</td>
+        <td class="text-right py-2 pr-2">{{ r.streak }}</td>
+        <td class="text-right py-2 {% if (r.rank_delta or 0) > 0 %}text-emerald-400{% elif (r.rank_delta or 0) < 0 %}text-red-400{% else %}text-gray-500{% endif %}">
+          {% if r.rank_delta is not none %}{{ '%+d'|format(r.rank_delta) }}{% else %}—{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{# ── Áreas de mejora ── #}
+<div class="mb-6 bg-gray-900 border border-gray-800 rounded-2xl p-4">
+  <h2 class="text-sm font-semibold text-white mb-3">Áreas de mejora (automático)</h2>
+  <ul class="text-sm text-gray-300 space-y-1 list-disc list-inside">
+    {% for a in payload.get('improvement_areas', []) %}
+    <li>
+      {% if a.type == 'question' %}Pregunta #{{ a.question_id }}: {{ a.label }} ({{ a.wrong_count }} errores)
+      {% else %}{{ a.type }} · {{ a.label }} — {{ a.accuracy_pct }}% (n={{ a.answered }}){% endif %}
+    </li>
+    {% else %}
+    <li class="text-gray-500">Sin señales fuertes por umbrales configurados.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<a href="/users" class="inline-flex items-center gap-1.5 text-gray-400 hover:text-white text-sm mb-6">
+  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+  </svg>
+  Volver a usuarios
+</a>
+
+<div class="flex items-center justify-between mb-6">
+  <h2 class="text-2xl font-bold text-white">{{ title }}</h2>
+  {% if u %}
+  <div class="flex gap-2">
+    <form method="post" action="/users/{{ u.id }}/toggle">
+      <button type="submit"
+        class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors
+          {{ 'border-amber-700 text-amber-400 hover:bg-amber-900/30' if u.status.value == 'active' else 'border-emerald-700 text-emerald-400 hover:bg-emerald-900/30' }}">
+        {{ '⏸ Desactivar' if u.status.value == 'active' else '▶ Activar' }}
+      </button>
+    </form>
+    <form method="post" action="/users/{{ u.id }}/delete"
+          onsubmit="return confirm('¿Eliminar a {{ u.name }} y todo su historial?')">
+      <button type="submit"
+        class="px-4 py-2 rounded-lg border border-red-800 text-red-400 hover:bg-red-900/30 text-sm font-medium transition-colors">
+        🗑 Eliminar
+      </button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+
+<form method="post" class="space-y-6">
+
+  <!-- ── Identity ── -->
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-5">
+    <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Identidad</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Nombre <span class="text-red-400">*</span></label>
+        <input type="text" name="name" value="{{ form.get('name','') }}" required
+          placeholder="Ana García"
+          class="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"/>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Email</label>
+        <input type="email" name="email" value="{{ form.get('email','') }}"
+          placeholder="ana@yourcompany.com"
+          class="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"/>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">
+          Telegram Chat ID <span class="text-red-400">*</span>
+          <span class="text-gray-500 font-normal">(el usuario puede verlo con @userinfobot)</span>
+        </label>
+        <input type="text" name="chat_id" value="{{ form.get('chat_id','') }}" required
+          placeholder="123456789"
+          class="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"/>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Username de Telegram</label>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">@</span>
+          <input type="text" name="username" value="{{ form.get('username','') }}"
+            placeholder="anag99"
+            class="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg pl-7 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"/>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Rol y permisos ── -->
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-5">
+    <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Rol y permisos</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Grupo</label>
+        <select name="group_id"
+          class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="">Sin asignar</option>
+          {% for g in groups %}
+          <option value="{{ g.id }}" {{ 'selected' if form.get('group_id')|string == g.id|string else '' }}>{{ '— ' if g.parent_group_id else '' }}{{ g.name }}</option>
+          {% endfor %}
+        </select>
+        <p class="text-gray-500 text-xs mt-1">El manager del grupo recibe alertas y ve el desempeño del grupo</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Rol en sistema</label>
+        <select name="role"
+          class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="rep"     {{ 'selected' if form.get('role','rep') == 'rep'     }}>Rep (Sales)</option>
+          <option value="manager" {{ 'selected' if form.get('role','rep') == 'manager' }}>Manager</option>
+          <option value="admin"   {{ 'selected' if form.get('role','rep') == 'admin'   }}>Admin</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Rol comercial</label>
+        <select name="sales_role"
+          class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value=""       {{ 'selected' if not form.get('sales_role') }}>Sin definir</option>
+          <option value="HUNTER" {{ 'selected' if form.get('sales_role','') == 'HUNTER' }}>🎯 Hunter</option>
+          <option value="FARMER" {{ 'selected' if form.get('sales_role','') == 'FARMER' }}>🌱 Farmer</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Estado</label>
+        <select name="active"
+          class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="1" {{ 'selected' if form.get('active','1') == '1' }}>✅ Activo</option>
+          <option value="0" {{ 'selected' if form.get('active','1') == '0' }}>⏸ Inactivo</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Perfil ── -->
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-5">
+    <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Perfil de entrenamiento</h3>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1.5">País base</label>
+      <select name="base_country"
+        class="w-full md:w-48 bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <option value="">Todos</option>
+        <option value="mexico"   {{ 'selected' if form.get('base_country','') == 'mexico'   }}>🇲🇽 México</option>
+        <option value="colombia" {{ 'selected' if form.get('base_country','') == 'colombia' }}>🇨🇴 Colombia</option>
+        <option value="chile"    {{ 'selected' if form.get('base_country','') == 'chile'    }}>🇨🇱 Chile</option>
+        <option value="peru"     {{ 'selected' if form.get('base_country','') == 'peru'     }}>🇵🇪 Perú</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-2">Especialidades
+        <span class="text-gray-500 font-normal">(define qué preguntas recibirá)</span>
+      </label>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {% set selected_specs = form.get('specializations', []) %}
+        {% for s in specs %}
+        <label class="flex items-center gap-2.5 cursor-pointer group">
+          <input type="checkbox" name="specializations" value="{{ s }}"
+            {{ 'checked' if s in selected_specs else '' }}
+            class="w-4 h-4 rounded bg-gray-700 border-gray-600 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-gray-900"/>
+          <span class="text-sm text-gray-300 group-hover:text-white transition-colors capitalize">{{ s }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Submit ── -->
+  <div class="flex items-center gap-4 pt-2 pb-8">
+    <button type="submit"
+      class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-8 py-2.5 rounded-lg text-sm transition-colors">
+      {{ 'Guardar cambios' if u else 'Crear usuario' }}
+    </button>
+    <a href="/users" class="text-gray-400 hover:text-white text-sm">Cancelar</a>
+  </div>
+
+</form>
+{% endblock %}

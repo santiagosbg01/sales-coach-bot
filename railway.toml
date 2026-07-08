@@ -1,0 +1,19 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "python bot.py"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 5
+numReplicas = 1
+
+# ─────────────────────────────────────────────────────────────────────────────
+# IMPORTANT — Data persistence:
+#
+# The SQLite database must be stored on a Railway persistent volume so it
+# survives deployments. In the Railway dashboard:
+#   1. Service → Volumes → Add Volume → Mount Path: /data
+#   2. Service → Variables → DATABASE_URL = sqlite:////data/sales_coach.db
+#
+# Without this, every deployment wipes all user answers and sessions.
+# ─────────────────────────────────────────────────────────────────────────────

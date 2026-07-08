@@ -1,0 +1,51 @@
+Sales Fundamentals — General Knowledge Base
+============================================
+
+This is an example, generic knowledge base. Replace this file with your company's
+sales playbook, product documentation, or methodology guide. The LLM grader uses
+this text as ground truth when evaluating open-ended answers tagged as "general".
+
+SPIN Selling Framework
+----------------------
+- Situation: understand the prospect's current state
+- Problem: identify pain points they're experiencing
+- Implication: quantify the cost of not solving the problem
+- Need-payoff: guide them to articulate the value of a solution
+
+Discovery Best Practices
+------------------------
+- Ask open-ended questions ("tell me about...", "what happens when...")
+- Silence is your friend; let the prospect fill the space
+- Take notes on their exact words — use them back later
+- Always validate before proposing
+
+Objection Handling
+------------------
+- Never argue; acknowledge and reframe
+- "Too expensive" usually means "I don't see enough value yet"
+- "We need to think about it" usually means "I have unspoken concerns"
+- Always ask permission to dig deeper
+
+Closing Signals
+---------------
+- Prospect asks about implementation timeline
+- Prospect brings in more stakeholders
+- Prospect asks about references or case studies
+- Prospect starts negotiating terms (price, scope)
+
+Multi-Threading in B2B
+----------------------
+Build relationships with at least 3 people in each target account:
+- The user (day-to-day contact)
+- The champion (internal advocate)
+- The economic buyer (approves budget)
+
+Follow-Up Rules
+---------------
+- Never send "just checking in" — always bring new value
+- Reference a specific point from the last conversation
+- Include a clear next step (proposed date, question, resource)
+- If silent 2+ weeks, break the pattern with something different
+
+Adapt this file to your reality. The more specific and current it is, the better
+the grader will evaluate rep answers.

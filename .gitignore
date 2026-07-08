@@ -1,0 +1,51 @@
+# Secrets — NEVER commit these
+.env
+*.env
+
+# Database files (server has its own)
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local email preview (scripts/test_report_email.py dry-run)
+email_report_preview.html
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Shooter state (managed by GitHub Actions cache)
+data/.sent_today.json
+
+# Temp
+tmp/
+temp/
+*.tmp
+*.xlsx

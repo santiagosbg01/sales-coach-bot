@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}Enviar preguntas — {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h2 class="text-2xl font-bold text-white">Enviar preguntas</h2>
+  <p class="text-gray-400 text-sm mt-0.5">Elige un usuario y una o varias preguntas para enviar ahora vía Telegram.</p>
+  <p class="text-gray-500 text-xs mt-1">Si agregaste el usuario manualmente, el rep debe abrir el bot primero (comparte el enlace de <a href="{{ url_for('dashboard.invites') }}" class="text-indigo-400 hover:text-indigo-300">Invitaciones</a>).</p>
+</div>
+
+<form method="post" id="sendForm" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+  <!-- ── LEFT: user picker ── -->
+  <div class="space-y-4">
+    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+      <h3 class="text-sm font-semibold text-gray-300 mb-4">1 · Selecciona el rep</h3>
+
+      <div class="space-y-2" id="userList">
+        {% for u in users %}
+        <label class="flex items-center gap-3 p-3 rounded-xl cursor-pointer border border-transparent
+                       hover:border-indigo-700 hover:bg-indigo-900/20 transition-all user-card
+                       {{ 'border-indigo-600 bg-indigo-900/30' if selected_user == u.id else '' }}"
+               data-uid="{{ u.id }}" data-chatid="{{ u.chat_id }}" data-name="{{ u.name }}">
+          <input type="radio" name="user_id" value="{{ u.id }}"
+            {{ 'checked' if selected_user == u.id else '' }}
+            class="hidden" required/>
+          <input type="hidden" name="chat_id" id="chat_id" value="{{ u.chat_id if selected_user == u.id else '' }}"/>
+          <input type="hidden" name="user_name" id="user_name" value="{{ u.name if selected_user == u.id else '' }}"/>
+
+          <div class="w-9 h-9 rounded-full bg-indigo-700 flex items-center justify-center text-white text-sm font-bold shrink-0">
+            {{ u.name[0].upper() }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="font-medium text-white text-sm">{{ u.name }}</p>
+            <p class="text-gray-500 text-xs">{{ u.role }} · {{ u.country }}</p>
+          </div>
+          <span class="text-xs font-mono text-gray-600">{{ u.chat_id }}</span>
+        </label>
+        {% else %}
+        <p class="text-gray-600 text-sm p-3">No hay usuarios con chat_id registrado.
+          <a href="/users/new" class="text-indigo-400 hover:text-indigo-300">Agregar uno →</a>
+        </p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: question picker ── -->
+  <div class="space-y-4">
+    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5 flex flex-col" style="min-height:480px">
+      <h3 class="text-sm font-semibold text-gray-300 mb-3">2 · Selecciona las preguntas</h3>
+
+      <!-- Search + filter -->
+      <div class="flex gap-2 mb-3">
+        <input id="qSearch" type="text" placeholder="Buscar pregunta…"
+          oninput="filterQ()"
+          class="flex-1 bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"/>
+        <select id="qProduct" onchange="filterQ()"
+          class="bg-gray-800 border border-gray-700 text-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="">Todos los productos</option>
+          {% set products = questions | map(attribute='product') | unique | sort | list %}
+          {% for p in products %}
+          <option value="{{ p | lower }}">{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Counter -->
+      <p class="text-xs text-gray-500 mb-2">
+        <span id="selectedCount">0</span> pregunta(s) seleccionada(s)
+      </p>
+
+      <!-- Question list (scrollable) -->
+      <div class="flex-1 overflow-y-auto space-y-1.5 pr-1" style="max-height:340px">
+        {% for q in questions %}
+        <label class="flex items-start gap-3 p-3 rounded-xl cursor-pointer border border-transparent
+                       hover:border-gray-700 hover:bg-gray-800/60 transition-all q-item"
+               data-text="{{ q.prompt | lower }}" data-product="{{ q.product | lower }}">
+          <input type="checkbox" name="question_ids" value="{{ q.id }}"
+            class="mt-0.5 w-4 h-4 rounded bg-gray-700 border-gray-600 text-indigo-500
+                   focus:ring-indigo-500 focus:ring-offset-gray-900 q-checkbox"
+            onchange="updateCount()"/>
+          <div class="flex-1 min-w-0">
+            <p class="text-gray-200 text-xs leading-relaxed">{{ q.prompt }}</p>
+            <div class="flex gap-1.5 mt-1.5 flex-wrap">
+              <span class="text-gray-600 text-xs">{{ q.product }}</span>
+              {% if q.qtype == 'multiple_choice' %}<span class="badge-mc">OM</span>
+              {% elif q.qtype == 'yes_no' %}<span class="badge-yn">S/N</span>
+              {% else %}<span class="badge-oe">Abierta</span>{% endif %}
+              {% if q.diff == 'hard' %}<span class="badge-hard">Difícil</span>
+              {% elif q.diff == 'easy' %}<span class="badge-easy">Fácil</span>{% endif %}
+            </div>
+          </div>
+        </label>
+        {% else %}
+        <p class="text-gray-600 text-sm p-3">No hay preguntas activas.</p>
+        {% endfor %}
+      </div>
+
+      <!-- Quick-select -->
+      <div class="flex gap-2 mt-3 pt-3 border-t border-gray-800">
+        <button type="button" onclick="selectAll()" class="text-xs text-indigo-400 hover:text-indigo-300">Seleccionar todo</button>
+        <button type="button" onclick="clearAll()" class="text-xs text-gray-500 hover:text-gray-300">Limpiar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Submit bar ── -->
+  <div class="lg:col-span-2 bg-gray-900 border border-gray-800 rounded-2xl p-5 flex items-center justify-between">
+    <div>
+      <p class="text-white text-sm font-medium" id="summaryText">Selecciona un usuario y al menos una pregunta</p>
+      <p class="text-gray-500 text-xs mt-0.5">La primera pregunta se envía ahora. Las demás cuando el rep conteste cada una.</p>
+    </div>
+    <button type="submit" id="sendBtn" disabled
+      class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed
+             text-white font-medium px-8 py-2.5 rounded-lg text-sm transition-colors flex items-center gap-2">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+      </svg>
+      Enviar ahora
+    </button>
+  </div>
+
+</form>
+
+<script>
+let selectedUser = null;
+
+// User selection
+document.querySelectorAll('.user-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.user-card').forEach(c => {
+      c.classList.remove('border-indigo-600', 'bg-indigo-900/30');
+      c.classList.add('border-transparent');
+    });
+    card.classList.add('border-indigo-600', 'bg-indigo-900/30');
+    card.classList.remove('border-transparent');
+
+    const radio = card.querySelector('input[type=radio]');
+    radio.checked = true;
+    selectedUser = { id: card.dataset.uid, name: card.dataset.name };
+
+    // Set hidden fields
+    document.getElementById('chat_id').value   = card.dataset.chatid;
+    document.getElementById('user_name').value = card.dataset.name;
+
+    updateSummary();
+  });
+});
+
+function updateCount() {
+  const n = document.querySelectorAll('.q-checkbox:checked').length;
+  document.getElementById('selectedCount').textContent = n;
+  updateSummary();
+}
+
+function updateSummary() {
+  const n = document.querySelectorAll('.q-checkbox:checked').length;
+  const btn = document.getElementById('sendBtn');
+  const txt = document.getElementById('summaryText');
+
+  if (selectedUser && n > 0) {
+    txt.textContent = `Enviar ${n} pregunta${n>1?'s':''} a ${selectedUser.name}`;
+    btn.disabled = false;
+  } else if (!selectedUser) {
+    txt.textContent = 'Selecciona un usuario y al menos una pregunta';
+    btn.disabled = true;
+  } else {
+    txt.textContent = 'Selecciona al menos una pregunta';
+    btn.disabled = true;
+  }
+}
+
+function filterQ() {
+  const search  = document.getElementById('qSearch').value.toLowerCase();
+  const product = document.getElementById('qProduct').value.toLowerCase();
+  document.querySelectorAll('.q-item').forEach(item => {
+    const textOk    = !search  || item.dataset.text.includes(search);
+    const productOk = !product || item.dataset.product.includes(product);
+    item.style.display = (textOk && productOk) ? '' : 'none';
+  });
+}
+
+function selectAll() {
+  document.querySelectorAll('.q-item').forEach(item => {
+    if (item.style.display !== 'none') {
+      item.querySelector('.q-checkbox').checked = true;
+    }
+  });
+  updateCount();
+}
+
+function clearAll() {
+  document.querySelectorAll('.q-checkbox').forEach(cb => cb.checked = false);
+  updateCount();
+}
+
+// Re-init on load if user pre-selected (from /users page link)
+updateSummary();
+</script>
+{% endblock %}

@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% block title %}Usuarios — {{ APP_NAME }}{% endblock %}
+{% block content_width %}max-w-[1600px]{% endblock %}
+
+{% block content %}
+<div class="min-w-0 max-w-full">
+<!-- Header (matches Questions page layout) -->
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h2 class="text-2xl font-bold text-white">Usuarios inscritos</h2>
+    <p class="text-gray-400 text-sm mt-0.5">{{ users | length }} usuarios en total</p>
+  </div>
+  <div class="flex items-center gap-3">
+    <form method="get" action="/users" class="flex flex-wrap items-center gap-4">
+        <div class="flex items-center gap-2">
+          <label class="text-gray-400 text-sm whitespace-nowrap">Estado:</label>
+          <select name="status" onchange="this.form.submit()"
+            class="bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[120px]">
+            <option value="" {{ 'selected' if not status_filter else '' }}>Todos</option>
+            <option value="pending" {{ 'selected' if status_filter == 'pending' else '' }}>Pendientes</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-gray-400 text-sm whitespace-nowrap">Grupo:</label>
+          <select name="group_id" onchange="this.form.submit()"
+            class="bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[160px]">
+            <option value="">Todos</option>
+            {% for g in groups %}
+            <option value="{{ g.id }}" {{ 'selected' if group_filter|string == g.id|string else '' }}>{{ '— ' if g.parent_group_id else '' }}{{ g.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </form>
+      <a href="/send"
+           class="inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-sm font-medium px-4 py-2.5 rounded-lg transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+          </svg>
+          Enviar preguntas
+        </a>
+        <a href="/users/new"
+           class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+          </svg>
+          Nuevo usuario
+        </a>
+  </div>
+</div>
+
+<!-- Table (full width below header, no horizontal scroll) -->
+<div class="bg-gray-900 border border-gray-800 rounded-2xl max-w-full min-w-0" style="overflow-x: hidden; overflow-y: visible;">
+  <div class="max-w-full min-w-0" style="overflow-x: hidden;">
+    <table class="users-table-fit w-full max-w-full text-sm" style="table-layout: fixed; width: 100%; max-width: 100%;">
+      <colgroup>
+        <col style="width: 15%;" />
+        <col style="width: 9%;" />
+        <col style="width: 9%;" />
+        <col style="width: 10%;" />
+        <col style="width: 9%;" />
+        <col style="width: 16%;" />
+        <col style="width: 8%;" />
+        <col style="width: 7%;" />
+        <col style="width: 7%;" />
+        <col style="width: 10%;" />
+      </colgroup>
+      <thead>
+        <tr class="border-b border-gray-800 text-gray-500 text-xs uppercase tracking-wider">
+          <th class="px-2 py-2 text-left overflow-hidden">Usuario</th>
+          <th class="px-2 py-2 text-left overflow-hidden">Grupo</th>
+          <th class="px-2 py-2 text-left overflow-hidden">Manager</th>
+          <th class="px-2 py-2 text-left overflow-hidden">Telegram</th>
+          <th class="px-2 py-2 text-left overflow-hidden">Rol/País</th>
+          <th class="px-2 py-2 text-left overflow-hidden">Espec.</th>
+          <th class="px-2 py-2 text-center overflow-hidden">Estado</th>
+          <th class="px-2 py-2 text-center overflow-hidden">Resp.</th>
+          <th class="px-2 py-2 text-center overflow-hidden">Ok</th>
+          <th class="px-2 py-2 text-center overflow-hidden">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-800">
+        {% for u in users %}
+        <tr class="hover:bg-gray-800/40 transition-colors">
+          <td class="px-2 py-2 align-middle overflow-hidden">
+            <div class="flex items-center gap-2 min-w-0 overflow-hidden">
+              <div class="w-7 h-7 rounded-full bg-indigo-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                {{ u.name[0].upper() }}
+              </div>
+              <div class="min-w-0 overflow-hidden">
+                <p class="font-medium text-white truncate">{{ u.name }}</p>
+                <p class="text-gray-500 text-xs truncate">{{ u.email }}</p>
+              </div>
+            </div>
+          </td>
+          <td class="px-2 py-2 text-gray-400 text-xs align-middle overflow-hidden truncate">{{ u.group }}</td>
+          <td class="px-2 py-2 text-gray-400 text-xs align-middle overflow-hidden truncate">{{ u.manager }}</td>
+          <td class="px-2 py-2 align-middle overflow-hidden">
+            <div class="min-w-0 overflow-hidden">
+              <p class="text-gray-300 text-xs font-mono truncate">{{ u.chat_id }}</p>
+              {% if u.username != '—' %}
+              <p class="text-gray-500 text-xs truncate">@{{ u.username }}</p>
+              {% endif %}
+            </div>
+          </td>
+          <td class="px-2 py-2 align-middle overflow-hidden">
+            <p class="text-gray-300 text-xs capitalize truncate">{{ u.sales_role }}</p>
+            <p class="text-gray-500 text-xs truncate">{{ u.country }}</p>
+          </td>
+          <td class="px-2 py-2 text-gray-400 text-xs align-middle overflow-hidden">
+            <p class="truncate" title="{{ u.specs }}">{{ u.specs }}</p>
+          </td>
+          <td class="px-2 py-2 text-center align-middle overflow-hidden">
+            {% if u.status == 'active' %}
+              <span class="inline-flex items-center gap-1 text-emerald-400 text-xs">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>Activo
+              </span>
+            {% elif u.status == 'pending' %}
+              <span class="inline-flex items-center gap-1 text-amber-400 text-xs">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>Pendiente
+              </span>
+            {% else %}
+              <span class="inline-flex items-center gap-1 text-gray-500 text-xs">
+                <span class="w-1.5 h-1.5 rounded-full bg-gray-600 inline-block"></span>Inactivo
+              </span>
+            {% endif %}
+          </td>
+          <td class="px-2 py-2 text-center text-gray-400 text-xs align-middle overflow-hidden">{{ u.total_sent }}</td>
+          <td class="px-2 py-2 text-center text-emerald-400 text-xs align-middle overflow-hidden">{{ u.total_cor }}</td>
+          <td class="px-2 py-2 align-middle overflow-hidden">
+            <div class="flex items-center justify-center gap-0.5 flex-nowrap min-w-0">
+              <!-- Send now -->
+              <a href="/send?user_id={{ u.id }}"
+                 class="p-0.5 rounded text-gray-400 hover:text-indigo-400 hover:bg-indigo-900/30 transition-colors shrink-0"
+                 title="Enviar preguntas">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                </svg>
+              </a>
+              <!-- View detail -->
+              <a href="/rep/{{ u.id }}"
+                 class="p-0.5 rounded text-gray-400 hover:text-blue-400 hover:bg-blue-900/30 transition-colors shrink-0"
+                 title="Ver detalle">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+              </a>
+              <!-- Edit -->
+              <a href="/users/{{ u.id }}/edit"
+                 class="p-0.5 rounded text-gray-400 hover:text-amber-400 hover:bg-amber-900/30 transition-colors shrink-0"
+                 title="Editar">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+              </a>
+              {% if u.status == 'pending' %}
+              <!-- Approve / Reject -->
+              <form method="post" action="/users/{{ u.id }}/approve" class="inline">
+                <button type="submit"
+                  class="p-0.5 rounded text-gray-500 hover:text-emerald-400 hover:bg-emerald-900/30 transition-colors shrink-0"
+                  title="Aprobar">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </button>
+              </form>
+              <form method="post" action="/users/{{ u.id }}/reject" class="inline"
+                    onsubmit="return confirm('¿Rechazar a {{ u.name }}?')">
+                <button type="submit"
+                  class="p-0.5 rounded text-gray-500 hover:text-red-400 hover:bg-red-900/30 transition-colors shrink-0"
+                  title="Rechazar">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </form>
+              {% else %}
+              <!-- Toggle -->
+              <form method="post" action="/users/{{ u.id }}/toggle" class="inline">
+                <button type="submit"
+                  class="p-0.5 rounded text-gray-500 hover:text-emerald-400 hover:bg-emerald-900/30 transition-colors shrink-0"
+                  title="{{ 'Desactivar' if u.status == 'active' else 'Activar' }}">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="{{ 'M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z' if u.status == 'active' else 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z' }}"/>
+                  </svg>
+                </button>
+              </form>
+              {% endif %}
+              <!-- Delete -->
+              <form method="post" action="/users/{{ u.id }}/delete" class="inline"
+                    onsubmit="return confirm('¿Eliminar a {{ u.name }}? Esto borrará todo su historial.')">
+                <button type="submit"
+                  class="p-0.5 rounded text-gray-500 hover:text-red-400 hover:bg-red-900/30 transition-colors shrink-0"
+                  title="Eliminar">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="10" class="px-3 py-8 text-center text-gray-600">
+            No hay usuarios inscritos.
+            <a href="/users/new" class="text-indigo-400 hover:text-indigo-300 ml-1">Agregar el primero →</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
+<style>
+  /* Keep users table within container; no horizontal scroll */
+  .users-table-fit { table-layout: fixed !important; }
+  .users-table-fit th,
+  .users-table-fit td { overflow: hidden; }
+</style>
+{% endblock %}

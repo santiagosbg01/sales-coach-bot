@@ -1,0 +1,180 @@
+{
+  "bank_name": "saas_example",
+  "description": "Example question bank for a generic B2B SaaS company — 12 questions covering discovery, qualification, objections, and closing. Adapt to your product.",
+  "questions": [
+    {
+      "prompt": "Un prospecto te dice: 'Ya usamos una herramienta parecida, ¿por qué cambiarnos a ustedes?' ¿Cuál es la mejor primera respuesta?",
+      "category": "objections",
+      "difficulty": "medium",
+      "tags": ["saas", "objections", "competition"],
+      "question_type": "open_ended",
+      "product": "product_a",
+      "country": "all",
+      "rubric": {
+        "must_have_concepts": ["indagar antes de vender", "preguntas abiertas", "qué usan hoy"],
+        "good_to_have_concepts": ["diferenciadores", "casos de éxito", "no atacar al competidor"],
+        "ideal_answer": "Antes de responder, indaga: 'Cuéntame cómo usan la herramienta actual — ¿qué funciona bien y qué no?' Solo con esa información puedes mostrar en qué eres genuinamente diferente. Nunca atacar directamente al competidor.",
+        "reference_snippet": "Discovery-first selling: entender el estado actual antes de proponer un cambio."
+      }
+    },
+    {
+      "prompt": "¿Qué información MÍNIMA necesitas antes de agendar una demo?",
+      "category": "qualification",
+      "difficulty": "easy",
+      "tags": ["saas", "qualification", "discovery"],
+      "question_type": "multiple_choice",
+      "product": "product_a",
+      "country": "all",
+      "choices": [
+        {"key": "A", "text": "Nombre y correo del contacto"},
+        {"key": "B", "text": "Nombre, cargo, tamaño de empresa, problema que buscan resolver"},
+        {"key": "C", "text": "Solo el nombre de la empresa"},
+        {"key": "D", "text": "Presupuesto exacto y fecha de compra"}
+      ],
+      "correct_answer": "B"
+    },
+    {
+      "prompt": "El cliente dice: 'Está muy caro'. ¿Qué NO deberías hacer?",
+      "category": "objections",
+      "difficulty": "medium",
+      "tags": ["saas", "objections", "pricing"],
+      "question_type": "multiple_choice",
+      "product": "product_a",
+      "country": "all",
+      "choices": [
+        {"key": "A", "text": "Preguntar '¿caro comparado con qué?'"},
+        {"key": "B", "text": "Ofrecer descuento inmediato para cerrar"},
+        {"key": "C", "text": "Reforzar el ROI y el costo de no resolver el problema"},
+        {"key": "D", "text": "Pedirle que cuantifique el impacto del problema"}
+      ],
+      "correct_answer": "B"
+    },
+    {
+      "prompt": "En una llamada de discovery, ¿cuál es la pregunta más poderosa para descubrir el dolor real?",
+      "category": "discovery",
+      "difficulty": "medium",
+      "tags": ["saas", "discovery", "spin"],
+      "question_type": "open_ended",
+      "product": "product_a",
+      "country": "all",
+      "rubric": {
+        "must_have_concepts": ["consecuencias", "impacto", "qué pasa si no resuelven"],
+        "good_to_have_concepts": ["cuantificación", "tiempo perdido", "dinero"],
+        "ideal_answer": "Preguntas de tipo 'implicación' (SPIN): '¿Qué pasa si no resuelven este problema en los próximos 6 meses?' o '¿Cuánto tiempo/dinero pierden al mes por esto?' Cuantificar el costo del status quo es lo que genera urgencia.",
+        "reference_snippet": "SPIN Selling: preguntas de Implicación descubren el costo real del problema."
+      }
+    },
+    {
+      "prompt": "¿Cuándo es apropiado enviar una propuesta comercial?",
+      "category": "closing",
+      "difficulty": "easy",
+      "tags": ["saas", "closing"],
+      "question_type": "multiple_choice",
+      "product": "product_a",
+      "country": "all",
+      "choices": [
+        {"key": "A", "text": "Después de la primera llamada, para agilizar"},
+        {"key": "B", "text": "Solo cuando el prospecto la pida explícitamente y hayamos validado necesidad, presupuesto y tomador de decisión"},
+        {"key": "C", "text": "Con cualquier prospecto que muestre interés"},
+        {"key": "D", "text": "Nunca — todo debe cerrarse en llamada"}
+      ],
+      "correct_answer": "B"
+    },
+    {
+      "prompt": "El prospecto tarda una semana en responder. ¿Cuál es el mejor follow-up?",
+      "category": "closing",
+      "difficulty": "medium",
+      "tags": ["saas", "closing", "follow_up"],
+      "question_type": "open_ended",
+      "product": "product_a",
+      "country": "all",
+      "rubric": {
+        "must_have_concepts": ["aportar valor nuevo", "no solo preguntar si vio el correo"],
+        "good_to_have_concepts": ["case study", "insight de industria", "pregunta abierta"],
+        "ideal_answer": "Nunca envíes 'checking in'. Manda algo de valor: un caso similar de otro cliente, un dato relevante de la industria, o una pregunta concreta que abra conversación. Ejemplo: 'Vi que [competidor de ellos] acaba de X — pensé en ti. ¿Cómo lo están viendo?'",
+        "reference_snippet": "Follow-ups efectivos siempre aportan algo, no solo piden."
+      }
+    },
+    {
+      "prompt": "¿La propuesta de valor debe ser la misma para todos los clientes?",
+      "category": "value_proposition",
+      "difficulty": "easy",
+      "tags": ["saas", "value_proposition"],
+      "question_type": "yes_no",
+      "product": "product_a",
+      "country": "all",
+      "correct_answer": "no"
+    },
+    {
+      "prompt": "Un stakeholder técnico dice 'necesito ver la integración con nuestro CRM antes de decidir'. ¿Qué haces?",
+      "category": "qualification",
+      "difficulty": "medium",
+      "tags": ["saas", "qualification", "technical"],
+      "question_type": "open_ended",
+      "product": "product_a",
+      "country": "all",
+      "rubric": {
+        "must_have_concepts": ["confirmar CRM específico", "próximo paso claro", "involucrar equipo técnico"],
+        "good_to_have_concepts": ["timing", "quién más aprueba", "criterios de éxito"],
+        "ideal_answer": "Confirma el CRM exacto, propón una llamada técnica con un ingeniero de nuestro equipo, y aprovecha para preguntar quién más participa en la decisión y qué criterios usan para aprobar la integración. Objetivo: dos citas más agendadas antes de colgar.",
+        "reference_snippet": "Cada objeción técnica es una oportunidad de multi-threading."
+      }
+    },
+    {
+      "prompt": "¿Cuál de estos es un signo claro de que el prospecto NO va a comprar?",
+      "category": "qualification",
+      "difficulty": "medium",
+      "tags": ["saas", "qualification", "disqualification"],
+      "question_type": "multiple_choice",
+      "product": "product_a",
+      "country": "all",
+      "choices": [
+        {"key": "A", "text": "Hace muchas preguntas técnicas"},
+        {"key": "B", "text": "Nunca puede identificar quién más participa en la decisión ni cuándo la tomarán"},
+        {"key": "C", "text": "Pidió una segunda demo"},
+        {"key": "D", "text": "Solicitó referencias de otros clientes"}
+      ],
+      "correct_answer": "B"
+    },
+    {
+      "prompt": "Al presentar tu producto, ¿debes recorrer todas las funcionalidades?",
+      "category": "value_proposition",
+      "difficulty": "easy",
+      "tags": ["saas", "demo", "value_proposition"],
+      "question_type": "yes_no",
+      "product": "product_a",
+      "country": "all",
+      "correct_answer": "no"
+    },
+    {
+      "prompt": "Explica en una frase qué es un 'multi-threading' en ventas B2B.",
+      "category": "general",
+      "difficulty": "medium",
+      "tags": ["saas", "b2b", "methodology"],
+      "question_type": "open_ended",
+      "product": "general",
+      "country": "all",
+      "rubric": {
+        "must_have_concepts": ["múltiples contactos", "misma cuenta"],
+        "good_to_have_concepts": ["reducir riesgo", "champion", "aprobadores"],
+        "ideal_answer": "Multi-threading es tener relaciones activas con varios stakeholders dentro de la misma cuenta (usuario, campeón, tomador de decisión, técnico), no depender de una sola persona.",
+        "reference_snippet": "Multi-threading reduce riesgo de que un cambio de rol o silencio bloquee el deal."
+      }
+    },
+    {
+      "prompt": "Un cliente actual te dice que otro proveedor lo está buscando. ¿Cuál es la mejor primera acción?",
+      "category": "objections",
+      "difficulty": "hard",
+      "tags": ["saas", "retention", "objections"],
+      "question_type": "open_ended",
+      "product": "product_a",
+      "country": "all",
+      "rubric": {
+        "must_have_concepts": ["preguntar qué buscan", "no defensiva", "reforzar valor entregado"],
+        "good_to_have_concepts": ["revisión de resultados", "renovar antes", "involucrar customer success"],
+        "ideal_answer": "Escucha con calma qué buscan que hoy no reciben. Reafirma resultados concretos que has entregado (ROI, tiempo ahorrado, casos). Propón una revisión de éxito con customer success e idealmente adelanta la renovación para blindar la cuenta.",
+        "reference_snippet": "En retención, la escucha activa vale más que argumentar defensivamente."
+      }
+    }
+  ]
+}

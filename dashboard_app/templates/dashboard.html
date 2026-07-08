@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+{% block title %}Resumen — {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+{% macro delta_badge(delta, suffix='') -%}
+  {%- set d_abs, d_pct = delta -%}
+  {%- if d_abs is not none and (d_abs != 0 or d_pct is not none) -%}
+    {%- set positive = d_abs > 0 -%}
+    {%- set neutral = d_abs == 0 -%}
+    <span class="inline-flex items-center gap-0.5 text-xs font-medium
+      {% if neutral %}text-gray-500{% elif positive %}text-emerald-400{% else %}text-red-400{% endif %}">
+      {% if not neutral %}{{ '▲' if positive else '▼' }}{% endif %}
+      {% if d_pct is not none %}{{ d_pct|abs }}%{% else %}{{ d_abs|abs }}{{ suffix }}{% endif %}
+      {% if d_pct is not none and suffix != '' %}<span class="text-gray-500 font-normal">({{ '+' if positive else ('' if neutral else '-') }}{{ d_abs|abs }}{{ suffix }})</span>{% endif %}
+    </span>
+  {%- else -%}
+    <span class="text-gray-600 text-xs">—</span>
+  {%- endif -%}
+{%- endmacro %}
+
+<!-- Header -->
+<div class="flex items-start justify-between mb-6 gap-4 flex-wrap">
+  <div>
+    <h2 class="text-2xl font-bold text-white">Resumen del equipo</h2>
+    <p class="text-gray-400 text-sm mt-0.5">
+      {{ date_start }} → {{ date_end }} · {{ range_days }} {{ 'día' if range_days == 1 else 'días' }}
+      <span class="text-gray-600">·</span>
+      <span class="text-gray-500">vs {{ prev_start_label }}–{{ prev_end_label }}</span>
+    </p>
+  </div>
+  <div class="flex items-center gap-3 flex-wrap">
+    {% if groups %}
+    <form method="get" action="/" class="flex items-center gap-2">
+      <input type="hidden" name="start" value="{{ date_start }}"/>
+      <input type="hidden" name="end" value="{{ date_end }}"/>
+      <input type="hidden" name="preset" value="{{ date_preset }}"/>
+      <label class="text-gray-400 text-sm">Grupo:</label>
+      <select name="group_id" onchange="this.form.submit()"
+        class="bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <option value="">Todos</option>
+        {% for g in groups %}
+        <option value="{{ g.id }}" {{ 'selected' if group_filter|string == g.id|string else '' }}>
+          {{ '— ' if g.parent_group_id else '' }}{{ g.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </form>
+    {% endif %}
+    <a href="/export/excel{% if group_filter %}?group_id={{ group_filter }}{% endif %}"
+     class="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0l-4-4m4 4V4"/></svg>
+    Exportar
+  </a>
+  </div>
+</div>
+
+<!-- Date range picker -->
+<div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 mb-6">
+  <form method="get" action="/" id="date-range-form" class="flex flex-wrap items-center gap-2">
+    {% if group_filter %}<input type="hidden" name="group_id" value="{{ group_filter }}"/>{% endif %}
+    <input type="hidden" name="preset" id="preset-field" value="{{ date_preset }}"/>
+
+    <div class="flex items-center gap-1 mr-2 flex-wrap" id="preset-buttons">
+      {% set presets = [('7d','Últimos 7 días'),('14d','Últimos 14 días'),('30d','Últimos 30 días'),('this_week','Esta semana'),('last_week','Semana pasada'),('this_month','Este mes')] %}
+      {% for val, lbl in presets %}
+      <button type="button" data-preset="{{ val }}"
+        class="preset-btn px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors
+          {% if date_preset == val %}bg-indigo-600 border-indigo-500 text-white{% else %}bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700{% endif %}">
+        {{ lbl }}
+      </button>
+      {% endfor %}
+    </div>
+
+    <div class="flex items-center gap-2 ml-auto flex-wrap">
+      <label class="text-gray-400 text-xs">Desde</label>
+      <input type="date" name="start" value="{{ date_start }}" max="{{ date_end }}"
+        class="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"/>
+      <label class="text-gray-400 text-xs">Hasta</label>
+      <input type="date" name="end" value="{{ date_end }}" min="{{ date_start }}"
+        class="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"/>
+      <button type="submit" id="apply-btn"
+        class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-1.5 rounded-lg">
+        Aplicar
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- KPI cards -->
+<div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+  <div class="stat-card col-span-1">
+    <p class="text-gray-400 text-xs font-medium uppercase tracking-wider">Reps activos</p>
+    <p class="text-4xl font-bold text-white mt-2">{{ total_reps }}</p>
+  </div>
+  <div class="stat-card col-span-1">
+    <p class="text-gray-400 text-xs font-medium uppercase tracking-wider">Enviadas</p>
+    <p class="text-4xl font-bold text-white mt-2">{{ team.sent }}</p>
+    <div class="mt-1">{{ delta_badge(deltas.sent) }}</div>
+  </div>
+  <div class="stat-card col-span-1">
+    <p class="text-gray-400 text-xs font-medium uppercase tracking-wider">Respondidas</p>
+    <p class="text-4xl font-bold text-white mt-2">{{ team.answered }}</p>
+    <p class="text-indigo-400 text-sm mt-1">{{ ans_pct }}% tasa</p>
+    <div class="mt-1">{{ delta_badge(deltas.ans_pct, 'pp') }}</div>
+  </div>
+  <div class="stat-card col-span-1">
+    <p class="text-gray-400 text-xs font-medium uppercase tracking-wider">Correctas</p>
+    <p class="text-4xl font-bold text-emerald-400 mt-2">{{ team.correct }}</p>
+    <p class="text-emerald-500 text-sm mt-1">{{ cor_pct }}% acierto</p>
+    <div class="mt-1">{{ delta_badge(deltas.cor_pct, 'pp') }}</div>
+  </div>
+  <div class="stat-card col-span-1">
+    <p class="text-gray-400 text-xs font-medium uppercase tracking-wider">Expiradas</p>
+    <p class="text-4xl font-bold text-amber-400 mt-2">{{ team.expired }}</p>
+    <div class="mt-1">{{ delta_badge(deltas.expired) }}</div>
+  </div>
+</div>
+
+<!-- Chart + Activity -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+  <!-- Timeseries chart -->
+  <div class="lg:col-span-2 bg-gray-900 border border-gray-800 rounded-2xl p-6">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="text-sm font-semibold text-gray-300">Actividad en el periodo</h3>
+      <span class="text-xs text-gray-500">{{ range_days }} {{ 'día' if range_days == 1 else 'días' }}</span>
+    </div>
+    <div style="position:relative;height:240px;">
+      <canvas id="actChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Recent activity -->
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 flex flex-col">
+    <h3 class="text-sm font-semibold text-gray-300 mb-4">Actividad reciente</h3>
+    <div class="flex-1 overflow-auto space-y-3" style="max-height:240px;">
+      {% for a in activity %}
+      <div class="flex items-start gap-3">
+        <div class="mt-0.5 shrink-0 w-2 h-2 rounded-full mt-2
+          {{ 'bg-emerald-400' if a.correct else 'bg-red-400' }}"></div>
+        <div class="min-w-0">
+          <p class="text-xs text-gray-200 font-medium truncate">{{ a.user }}</p>
+          <p class="text-xs text-gray-500 truncate">{{ a.prompt }}</p>
+          <p class="text-xs text-gray-600 mt-0.5">{{ a.product }} · {{ a.time }}</p>
+        </div>
+        {% if a.score is not none %}
+        <span class="ml-auto shrink-0 text-xs font-bold
+          {{ 'text-emerald-400' if a.correct else 'text-red-400' }}">
+          {{ a.score }}/5
+        </span>
+        {% endif %}
+      </div>
+      {% else %}
+      <p class="text-gray-600 text-xs">Sin actividad en este rango.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Leaderboard -->
+<div class="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden mb-8">
+  <div class="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
+    <h3 class="text-sm font-semibold text-gray-300">🏆 Ranking</h3>
+    <a href="/leaderboard" target="_blank" class="text-indigo-400 hover:text-indigo-300 text-xs font-medium">Ver completo →</a>
+  </div>
+  <div class="p-4">
+    {% if leaderboard %}
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+      {% for r in leaderboard %}
+      <div class="flex items-center gap-2 p-2 rounded-lg {{ 'bg-amber-500/10 border border-amber-500/30' if r.points == leaderboard[0].points and loop.first else 'bg-gray-800/50' }}">
+        <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0
+          {{ 'bg-amber-500/50 text-amber-300' if loop.index == 1 else ('bg-gray-600 text-gray-400' if loop.index == 2 else ('bg-amber-700/50 text-amber-600' if loop.index == 3 else 'bg-gray-700 text-gray-500')) }}">
+          {{ loop.index }}
+        </span>
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-medium text-white truncate">{{ r.name }}</p>
+          <p class="text-xs text-gray-500">⭐ {{ r.points }} · 🔥 {{ r.streak }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-gray-500 text-sm py-4">Sin datos aún.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Team table -->
+<div class="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+  <div class="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
+    <h3 class="text-sm font-semibold text-gray-300">Miembros del equipo</h3>
+    <span class="text-xs text-gray-500">Periodo actual vs previo · columna "Δ"</span>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-gray-800 text-gray-500 text-xs uppercase tracking-wider">
+          <th class="px-6 py-3 text-left">Rep</th>
+          <th class="px-6 py-3 text-left">Rol / Especialidades</th>
+          <th class="px-6 py-3 text-center">🔥 Racha</th>
+          <th class="px-6 py-3 text-center">⭐ Pts</th>
+          <th class="px-6 py-3 text-center">Enviadas</th>
+          <th class="px-6 py-3 text-center">Resp. %</th>
+          <th class="px-6 py-3 text-center">Acierto %</th>
+          <th class="px-6 py-3 text-center">Δ Correctas</th>
+          <th class="px-6 py-3 text-center">Total histórico</th>
+          <th class="px-6 py-3 text-right">Detalle</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-800">
+        {% for u in users %}
+        <tr class="hover:bg-gray-800/50 transition-colors">
+          <td class="px-6 py-4">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-indigo-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                {{ u.name[0].upper() }}
+              </div>
+              <div>
+                <p class="font-medium text-white">{{ u.name }}</p>
+                <p class="text-gray-500 text-xs">{{ u.flag }} {{ u.country }}</p>
+              </div>
+            </div>
+          </td>
+          <td class="px-6 py-4">
+            <p class="text-gray-300">{{ u.role }}</p>
+            <p class="text-gray-600 text-xs">{{ u.specs or '—' }}</p>
+          </td>
+          <td class="px-6 py-4 text-center text-gray-300">{{ u.streak }}</td>
+          <td class="px-6 py-4 text-center text-gray-300">{{ u.points }}</td>
+          <td class="px-6 py-4 text-center text-gray-300">{{ u.sent }}</td>
+          <td class="px-6 py-4 text-center">
+            <span class="font-semibold
+              {{ 'text-emerald-400' if u.ans_pct >= 80 else ('text-amber-400' if u.ans_pct >= 50 else 'text-red-400') }}">
+              {{ u.ans_pct }}%
+            </span>
+          </td>
+          <td class="px-6 py-4 text-center">
+            <div class="flex flex-col items-center">
+              <span class="font-semibold
+                {{ 'text-emerald-400' if u.cor_pct >= 70 else ('text-amber-400' if u.cor_pct >= 40 else 'text-red-400') }}">
+                {{ u.cor_pct }}%
+              </span>
+              <span class="text-xs
+                {% if u.cor_pct_delta > 0 %}text-emerald-400{% elif u.cor_pct_delta < 0 %}text-red-400{% else %}text-gray-600{% endif %}">
+                {% if u.cor_pct_delta != 0 %}{{ '▲' if u.cor_pct_delta > 0 else '▼' }} {{ u.cor_pct_delta|abs }}pp{% else %}—{% endif %}
+              </span>
+            </div>
+          </td>
+          <td class="px-6 py-4 text-center">
+            <div class="flex flex-col items-center">
+              <span class="text-gray-300">{{ u.correct }}</span>
+              <span class="text-xs
+                {% if u.correct_delta > 0 %}text-emerald-400{% elif u.correct_delta < 0 %}text-red-400{% else %}text-gray-600{% endif %}">
+                {% if u.correct_delta != 0 %}{{ '+' if u.correct_delta > 0 else '' }}{{ u.correct_delta }} vs prev{% else %}—{% endif %}
+              </span>
+            </div>
+          </td>
+          <td class="px-6 py-4 text-center text-gray-300">{{ u.total_cor }}/{{ u.total_ans }}</td>
+          <td class="px-6 py-4 text-right">
+            <a href="/rep/{{ u.id }}?start={{ date_start }}&end={{ date_end }}&preset={{ date_preset }}"
+               class="text-indigo-400 hover:text-indigo-300 text-xs font-medium">Ver →</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="10" class="px-6 py-8 text-center text-gray-600">No hay reps activos aún.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const ctx = document.getElementById('actChart').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: {{ chart_labels | tojson }},
+    datasets: [
+      {
+        label: 'Respondidas',
+        data: {{ chart_answered | tojson }},
+        backgroundColor: 'rgba(99,102,241,0.5)',
+        borderColor: 'rgba(99,102,241,1)',
+        borderWidth: 1,
+        borderRadius: 4,
+      },
+      {
+        label: 'Correctas',
+        data: {{ chart_correct | tojson }},
+        backgroundColor: 'rgba(52,211,153,0.5)',
+        borderColor: 'rgba(52,211,153,1)',
+        borderWidth: 1,
+        borderRadius: 4,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#9ca3af', font: { size: 11 } } } },
+    scales: {
+      x: { ticks: { color: '#6b7280', font: { size: 10 }, maxRotation: 0, autoSkip: true }, grid: { color: '#1f2937' } },
+      y: { ticks: { color: '#6b7280', font: { size: 10 }, precision: 0 }, grid: { color: '#1f2937' }, beginAtZero: true }
+    }
+  }
+});
+
+// Preset buttons: set preset field and submit
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('preset-field').value = btn.dataset.preset;
+    document.getElementById('date-range-form').submit();
+  });
+});
+// "Aplicar" with manual dates sets preset=custom
+document.getElementById('apply-btn').addEventListener('click', () => {
+  document.getElementById('preset-field').value = 'custom';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,41 @@
+Product A — Sample Knowledge Base
+==================================
+
+This is a placeholder. Replace it with your actual product documentation.
+
+When a question is tagged with `product = "product_a"`, this file is loaded and
+sent to the LLM as ground truth for grading.
+
+Structure suggestions:
+
+## Overview
+One paragraph explaining what Product A is and who it's for.
+
+## Key Features
+- Feature 1: benefit
+- Feature 2: benefit
+- Feature 3: benefit
+
+## Pricing Model
+Brief description of how it's priced (per seat, per usage, tiered, etc.)
+
+## Ideal Customer Profile (ICP)
+- Company size:
+- Industry:
+- Use case:
+- Common pain points:
+
+## Common Objections & Responses
+- "Too expensive" → ...
+- "We already have X" → ...
+- "Not the right time" → ...
+
+## Differentiators vs. Competitors
+- Competitor 1: how we're different
+- Competitor 2: how we're different
+
+## Case Studies (short pitches)
+- Customer A: reduced X by Y% in Z months
+- Customer B: achieved goal X
+
+Keep this file under 8KB for best LLM performance.

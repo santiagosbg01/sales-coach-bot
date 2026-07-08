@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Feedback de preguntas — {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-white">Feedback de preguntas</h1>
+  <p class="text-gray-400 text-sm mt-1 max-w-2xl">
+    Comentarios que los reps han enviado sobre preguntas o respuestas incorrectas o confusas.
+    En Pendientes la cola va del más antiguo al más reciente; al marcar como completado el ítem sale de la cola.
+  </p>
+</div>
+
+<div class="flex flex-wrap gap-2 mb-4">
+  <a href="{{ url_for('dashboard.feedbacks_page', queue='pending') }}"
+     class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors
+       {{ 'bg-indigo-600 border-indigo-500 text-white' if queue == 'pending' else 'bg-gray-900 border-gray-700 text-gray-300 hover:border-gray-600' }}">
+    Pendientes
+    <span class="text-xs tabular-nums px-1.5 py-0.5 rounded-md {{ 'bg-indigo-800 text-indigo-100' if queue == 'pending' else 'bg-gray-800 text-gray-400' }}">{{ pending_count }}</span>
+  </a>
+  <a href="{{ url_for('dashboard.feedbacks_page', queue='completed') }}"
+     class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors
+       {{ 'bg-indigo-600 border-indigo-500 text-white' if queue == 'completed' else 'bg-gray-900 border-gray-700 text-gray-300 hover:border-gray-600' }}">
+    Completados
+    <span class="text-xs tabular-nums px-1.5 py-0.5 rounded-md {{ 'bg-indigo-800 text-indigo-100' if queue == 'completed' else 'bg-gray-800 text-gray-400' }}">{{ completed_count }}</span>
+  </a>
+  <a href="{{ url_for('dashboard.feedbacks_page', queue='all') }}"
+     class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors
+       {{ 'bg-indigo-600 border-indigo-500 text-white' if queue == 'all' else 'bg-gray-900 border-gray-700 text-gray-300 hover:border-gray-600' }}">
+    Todos
+  </a>
+</div>
+
+<div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 overflow-x-auto">
+  <table class="min-w-full text-sm">
+    <thead>
+      <tr class="text-gray-400 text-xs border-b border-gray-800">
+        <th class="text-left py-2 pr-3">Fecha</th>
+        <th class="text-left py-2 pr-3">Rep</th>
+        <th class="text-left py-2 pr-3">Pregunta</th>
+        <th class="text-left py-2 pr-3">Comentario</th>
+        <th class="text-left py-2 pr-3">Acciones</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-800">
+      {% for fb in feedbacks %}
+      <tr class="align-top {{ 'opacity-60' if queue == 'all' and fb.handled else '' }}">
+        <td class="py-2 pr-3 text-gray-400 whitespace-nowrap">{{ fb.created_at }}</td>
+        <td class="py-2 pr-3 text-gray-200 whitespace-nowrap">
+          {{ fb.user_name }}<br/>
+          <span class="text-xs text-gray-500">ID {{ fb.user_id }}</span>
+        </td>
+        <td class="py-2 pr-3 text-gray-200">
+          {% if fb.question_id %}
+            <span class="text-xs text-gray-500">Q{{ fb.question_id }}</span><br/>
+            {{ fb.question_prompt }}
+          {% else %}
+            <span class="text-gray-500 text-xs italic">Sin referencia de pregunta</span>
+          {% endif %}
+        </td>
+        <td class="py-2 pr-3 text-gray-300">
+          {{ fb.comment }}
+        </td>
+        <td class="py-2 pr-3 text-xs whitespace-nowrap align-top">
+          <div class="flex flex-col gap-2 items-start">
+            {% if fb.question_id %}
+              <a href="/questions/{{ fb.question_id }}/edit"
+                 class="text-indigo-400 hover:text-indigo-300">Editar pregunta</a>
+            {% endif %}
+            {% if not fb.handled %}
+              <form method="post" action="{{ url_for('dashboard.feedback_toggle_handled', fb_id=fb.id) }}" class="inline">
+                <input type="hidden" name="next" value="{{ url_for('dashboard.feedbacks_page', queue=queue) }}"/>
+                <input type="hidden" name="handled" value="1"/>
+                <button type="submit" class="text-emerald-400 hover:text-emerald-300 font-medium">
+                  Marcar completado
+                </button>
+              </form>
+            {% else %}
+              <form method="post" action="{{ url_for('dashboard.feedback_toggle_handled', fb_id=fb.id) }}" class="inline">
+                <input type="hidden" name="next" value="{{ url_for('dashboard.feedbacks_page', queue=queue) }}"/>
+                <input type="hidden" name="handled" value="0"/>
+                <button type="submit" class="text-amber-400 hover:text-amber-300 font-medium">
+                  Volver a la cola
+                </button>
+              </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not feedbacks %}
+      <tr>
+        <td colspan="5" class="py-6 text-center text-gray-500 text-sm">
+          {% if queue == 'pending' %}
+            No hay feedback pendiente. Cola al día.
+          {% elif queue == 'completed' %}
+            Aún no hay entradas marcadas como completadas.
+          {% else %}
+            Aún no hay feedback registrado.
+          {% endif %}
+        </td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
